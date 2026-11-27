@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261127d">
+  <link rel="stylesheet" href="admin.css?v=20261128a">
 </head>
 <body>
   <!-- Login -->
@@ -83,6 +83,8 @@
         <label>Il link da mandarle
           <div class="row"><input id="s-link" readonly><button type="button" class="ghost" id="s-copy">Copia</button></div>
         </label>
+        <p class="muted small" id="s-notify-line">Notifiche: …</p>
+        <div class="row" style="margin-bottom:14px"><button type="button" class="ghost" id="s-test">🔔 Manda una notifica di prova (arriva a tutti i telefoni iscritti)</button></div>
         <button class="primary" type="submit" id="s-save">Salva</button>
         <p class="error" id="s-error" role="alert"></p>
       </form>
@@ -110,6 +112,12 @@
       <label>Buono (facoltativo) <input id="f-voucher" maxlength="60" placeholder="Es. una serata insieme"></label>
       <p class="muted small" style="margin:-8px 0 14px">Se lo scrivi, la sorpresa mostra un biglietto "Buono per…" su una busta rossa.</p>
 
+      <div class="two">
+        <label>Notifica delle 8 <input id="f-notify-m" maxlength="140"></label>
+        <label>Promemoria delle 20 <input id="f-notify-e" maxlength="140"></label>
+      </div>
+      <p class="muted small" style="margin:-8px 0 14px">Facoltative: se le lasci vuote parte il messaggio che vedi in grigio. Il promemoria delle 20 arriva solo se non ha ancora aperto la casella.</p>
+
       <div class="media-block">
         <strong>Foto, video e audio</strong>
         <ul class="media-list" id="media-list"></ul>
@@ -131,7 +139,7 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="config.js?v=20261127d"></script>
-  <script src="admin.js?v=20261127d"></script>
+  <script src="config.js?v=20261128a"></script>
+  <script src="admin.js?v=20261128a"></script>
 </body>
 </html>

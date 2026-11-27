@@ -341,8 +341,76 @@
   }
 
   let opening = false;
+  // ---------- suono all'apertura ----------
+  // Il primo audio del giorno (es. un vocale) parte da solo quando lei apre la casella;
+  // se non c'è, suonano dei campanellini leggeri. I browser lo permettono solo dopo un tocco,
+  // quindi "sblocchiamo" l'audio subito, dentro il tocco, e lo facciamo partire dopo l'animazione.
+  const SOUND_KEY = "avvento-suono";
+  let soundOn = store.get(SOUND_KEY) !== "off";
+  const voice = document.createElement("audio");
+  voice.controls = true; voice.preload = "auto"; voice.setAttribute("playsinline", "");
+  const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+  let actx = null, unlocked = false;
+
+  function unlockAudio() {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+    } catch {}
+    if (!unlocked) {
+      voice.src = SILENT;
+      const p = voice.play();
+      if (p) p.then(() => { unlocked = true; }).catch(() => {});
+    }
+  }
+
+  function chime() {
+    if (!actx || !soundOn) return;
+    const t0 = actx.currentTime + 0.05;
+    [1318.5, 1568, 1975.5, 2637].forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      const t = t0 + i * 0.11;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+      o.connect(g).connect(actx.destination);
+      o.start(t); o.stop(t + 1.2);
+    });
+  }
+
+  function stopVoice() { try { voice.pause(); } catch {} }
+
+  // Mette il lettore audio del giorno nella sorpresa e, se il suono è attivo, lo fa partire.
+  function playDaySound(audioFile, box) {
+    stopVoice();
+    if (audioFile && audioFile.url) {
+      voice.src = audioFile.url;
+      box.prepend(voice);
+      if (soundOn) voice.play().catch(() => {});
+    } else {
+      voice.remove();
+      chime();
+    }
+  }
+
+  function renderSoundBtn() {
+    const b = $("s-sound");
+    b.textContent = soundOn ? "🔊" : "🔇";
+    b.setAttribute("aria-label", soundOn ? "Togli il suono" : "Metti il suono");
+  }
+  $("s-sound").addEventListener("click", () => {
+    soundOn = !soundOn;
+    store.set(SOUND_KEY, soundOn ? "on" : "off");
+    renderSoundBtn();
+    if (!soundOn) stopVoice();
+    else { unlockAudio(); if (voice.isConnected && voice.src.startsWith("http")) voice.play().catch(() => {}); }
+  });
+  renderSoundBtn();
+
   async function onTile(day, tile) {
     if (opening) return;
+    if (day <= state.unlocked) unlockAudio();
     if (day > state.unlocked && Date.now() - fetchedAt > 60e3) {
       try { await reload(); } catch {}
       if (day <= state.unlocked) return onTile(day, $("grid").querySelector(`[data-day="${day}"]`) || tile);
@@ -424,8 +492,10 @@
   }
 
   let currentDay = 0;
+  let soundBox = null, soundFile = null;
   function openSurprise(day) {
     currentDay = day;
+    soundBox = null; soundFile = null;
     const d = state.days.get(day);
     const body = $("s-body");
     body.textContent = "";
@@ -457,9 +527,11 @@
         body.append(fig);
       });
       if (d.message) body.append(el("p", "message", d.message));
-      const others = media.filter((f) => f.url && (f.type === "video" || f.type === "audio"));
-      if (others.length) {
-        const m = el("div", "media");
+      const firstAudio = media.find((f) => f.url && f.type === "audio");
+      const others = media.filter((f) => f.url && (f.type === "video" || f.type === "audio") && f !== firstAudio);
+      const m = el("div", "media");
+      if (firstAudio) { soundBox = m; soundFile = firstAudio; }
+      if (others.length || firstAudio) {
         for (const f of others) {
           const node = document.createElement(f.type);
           node.controls = true; node.preload = "metadata"; node.src = f.url;
@@ -488,6 +560,7 @@
     sheetEl.classList.toggle("xmas", day === 24 && !!hasContent);
     lastOpened = day;
     if (!dlg.open) { dlg.showModal(); startSnow(); }
+    playDaySound(soundFile, soundBox);
     dlg.scrollTop = 0;
     dlg.querySelector(".sheet").scrollTop = 0;
   }
@@ -502,6 +575,7 @@
 
   function goTo(day) {
     if (day < 1 || day > state.unlocked || day > 24) return;
+    unlockAudio();
     const sheet = $("surprise").querySelector(".sheet");
     const dir = day > currentDay ? 1 : -1;
     sheet.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${-30 * dir}px)` }], { duration: 160, fill: "forwards" })
@@ -529,6 +603,7 @@
   }, { passive: true });
   dlg.addEventListener("close", () => {
     dlg.querySelectorAll("video, audio").forEach((m) => m.pause());
+    stopVoice();
     stopSnow();
     if (state) render();
   });

@@ -231,22 +231,99 @@
   $("file").addEventListener("change", async (e) => {
     const files = [...e.target.files];
     e.target.value = "";
+    for (const [i, file] of files.entries()) await uploadFile(file, `${i + 1} di ${files.length}`);
+  });
+
+  // Carica un file nel giorno aperto e lo salva subito. true se è andato bene.
+  async function uploadFile(file, label = "") {
     const status = $("upload-status");
-    for (const [i, file] of files.entries()) {
+    {
       const type = kindOf(file);
-      if (!type) { status.textContent = `"${file.name}" non è foto, video o audio.`; continue; }
-      if (file.size > MAX) { status.textContent = `"${file.name}" pesa più di 50 MB: comprimilo e riprova.`; continue; }
-      status.textContent = `Caricamento ${i + 1} di ${files.length}: ${file.name}…`;
+      if (!type) { status.textContent = `"${file.name}" non è foto, video o audio.`; return false; }
+      if (file.size > MAX) { status.textContent = `"${file.name}" pesa più di 50 MB: comprimilo e riprova.`; return false; }
+      status.textContent = `Caricamento ${label ? label + ": " : ""}${file.name}…`;
       const safe = file.name.normalize("NFD").replace(/[^\w.-]+/g, "_").slice(-60);
       const path = `${cal.slug}/giorno-${current.day}/${Date.now()}-${safe}`;
       const { error } = await sb.storage.from("surprises").upload(path, file, { contentType: file.type || undefined });
-      if (error) { status.textContent = `Errore con "${file.name}": ${error.message}`; continue; }
+      if (error) { status.textContent = `Errore con "${file.name}": ${error.message}`; return false; }
       current.media.push({ path, type, name: file.name });
-      try { await saveRow(); } catch (err) { status.textContent = "File caricato ma non salvato: " + err.message; continue; }
+      try { await saveRow(); } catch (err) { status.textContent = "File caricato ma non salvato: " + err.message; return false; }
       renderMedia();
       status.textContent = `Caricato: ${file.name} ✓`;
+      return true;
     }
+  }
+
+  // ---------- registra un vocale ----------
+  const REC_MAX = 120; // secondi
+  let rec = null, recStream = null, recBlob = null, recTimer = null, recUrl = null;
+  const recType = () => ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg"]
+    .find((t) => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+
+  function recUI(mode, text = "") {
+    $("rec-start").hidden = mode !== "idle";
+    $("rec-live").hidden = mode !== "live";
+    $("rec-done").hidden = mode !== "done";
+    $("rec-msg").textContent = text;
+  }
+  function recReset() {
+    clearInterval(recTimer);
+    try { if (rec && rec.state !== "inactive") rec.stop(); } catch {}
+    recStream?.getTracks().forEach((t) => t.stop());
+    rec = recStream = recBlob = null;
+    if (recUrl) URL.revokeObjectURL(recUrl);
+    recUrl = null;
+    $("rec-play").removeAttribute("src");
+    recUI("idle");
+  }
+
+  $("rec-start").addEventListener("click", async () => {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      return recUI("idle", "Questo browser non registra: usa \"Aggiungi file\" con un vocale fatto dal telefono.");
+    }
+    recUI("idle", "Il telefono ti chiederà di usare il microfono: tocca Consenti.");
+    try {
+      recStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    } catch {
+      return recUI("idle", "Senza il permesso del microfono non posso registrare. Puoi riattivarlo nelle impostazioni del browser.");
+    }
+    const type = recType();
+    rec = new MediaRecorder(recStream, type ? { mimeType: type, audioBitsPerSecond: 64000 } : undefined);
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      clearInterval(recTimer);
+      recStream?.getTracks().forEach((t) => t.stop());
+      recBlob = new Blob(chunks, { type: rec.mimeType || type || "audio/webm" });
+      recUrl = URL.createObjectURL(recBlob);
+      $("rec-play").src = recUrl;
+      recUI("done", "Riascoltalo: se ti piace tocca \"Usa questo\".");
+    };
+    const start = Date.now();
+    rec.start(1000);
+    recUI("live");
+    const tick = () => {
+      const sec = Math.floor((Date.now() - start) / 1000);
+      $("rec-time").textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")} / 2:00`;
+      if (sec >= REC_MAX && rec.state === "recording") rec.stop();
+    };
+    tick();
+    recTimer = setInterval(tick, 250);
   });
+
+  $("rec-stop").addEventListener("click", () => { if (rec && rec.state === "recording") rec.stop(); });
+  $("rec-redo").addEventListener("click", () => { recReset(); $("rec-start").click(); });
+  $("rec-use").addEventListener("click", async () => {
+    if (!recBlob) return;
+    const btn = $("rec-use");
+    btn.disabled = true;
+    const ext = /mp4|aac/.test(recBlob.type) ? "m4a" : /ogg/.test(recBlob.type) ? "ogg" : "webm";
+    const file = new File([recBlob], `vocale-${current.day}.${ext}`, { type: recBlob.type.split(";")[0] });
+    const ok = await uploadFile(file);
+    btn.disabled = false;
+    if (ok) { recReset(); $("upload-status").textContent = "Vocale salvato ✓ Parte da solo quando apre la casella."; }
+  });
+  dlg.addEventListener("close", recReset);
 
   async function renderMedia() {
     const list = $("media-list");

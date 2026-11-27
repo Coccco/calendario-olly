@@ -6,5 +6,5 @@ window.CONFIG = {
 
   NOME_LEI: "Olly",
   FIRMA: "Cocco",
-  INTRO: "Ogni giorno di dicembre, fino a Natale, qui dentro trovi una piccola sorpresa. Una casella al giorno, niente sbirciatine!",
+  INTRO: "Una piccola sorpresa al giorno, fino a Natale.",
 };

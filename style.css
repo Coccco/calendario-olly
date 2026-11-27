@@ -378,3 +378,86 @@ body::before {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .snow { display: none; }
 }
+
+/* ---------- Ritocchi: dettagli delle caselle ---------- */
+.tile .frame {
+  position: absolute; inset: 5px; z-index: 1; pointer-events: none;
+  border: 1px solid rgba(241, 217, 164, .35); border-radius: 6px;
+}
+.c-cream .frame { border: 1px dashed rgba(142, 27, 34, .28); }
+.tile.big .frame { display: none; }
+.tile .num { display: inline-flex; flex-direction: column; align-items: center; }
+.tile .mon {
+  margin-top: 3px;
+  font-family: var(--text); font-style: normal; font-weight: 500;
+  font-size: 10px; letter-spacing: .3em; text-transform: uppercase; opacity: .7;
+}
+.tile.big .mon { font-size: 13px; margin-top: 0; }
+
+/* ---------- Foto stile polaroid ---------- */
+.polaroid {
+  margin: 6px auto 10px; padding: 12px 12px 14px;
+  width: min(100%, 420px);
+  background: #fffdf7;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12), 0 12px 28px rgba(60, 30, 20, .18);
+  transform: rotate(var(--tilt, -1.5deg));
+}
+.polaroid img { display: block; width: 100%; max-height: 60dvh; object-fit: cover; border-radius: 1px; background: #eee; }
+.polaroid figcaption {
+  margin-top: 10px; text-align: center;
+  font-family: "Caveat", cursive; font-size: 24px; line-height: 1.1; color: #4a2a22;
+}
+.polaroid:not(:has(figcaption)) { padding-bottom: 40px; }
+.see-you {
+  margin: 22px 0 0; padding-top: 16px;
+  border-top: 1px dashed rgba(142, 27, 34, .3);
+  text-align: center; font-style: italic; font-size: 18px; color: var(--wine);
+}
+
+/* ---------- Animazione di apertura ---------- */
+.opener { position: fixed; inset: 0; z-index: 90; background: rgba(6, 18, 12, .72); backdrop-filter: blur(3px); opacity: 0; perspective: 900px; }
+.op-glow {
+  position: absolute; left: 50%; top: 50%; width: 520px; height: 520px;
+  background: radial-gradient(closest-side, rgba(255, 221, 150, .75), rgba(255, 190, 90, .25) 45%, transparent 70%);
+  opacity: 0; pointer-events: none;
+}
+.op-card {
+  position: fixed; display: flex; align-items: center; justify-content: center;
+  border-radius: 9px; transform-origin: center;
+  font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 36px;
+}
+.op-bow { position: absolute; left: 50%; top: 50%; width: 70%; max-width: 120px; transform: translate(-50%, -55%); }
+.op-bow svg { display: block; width: 100%; }
+.op-env {
+  position: fixed; left: 50%; top: 50%; width: 260px; height: 170px;
+  transform: translate(-50%, -50%); opacity: 0; perspective: 800px;
+  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, .45));
+}
+.op-back { position: absolute; inset: 0; background: #dcc7a2; border-radius: 6px; }
+.op-letter {
+  position: absolute; left: 12px; right: 12px; top: 10px; height: 150px; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px;
+  padding-top: 18px; border-radius: 4px;
+  background: linear-gradient(170deg, #fffaf0, #f3e7d0);
+  color: var(--wine); font-family: var(--serif);
+}
+.op-letter span { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: #b3222a; }
+.op-letter b { font-style: italic; font-size: 26px; }
+.op-front {
+  position: absolute; inset: 0; z-index: 2; border-radius: 6px;
+  background: linear-gradient(160deg, #f4e8d2, #e6d4b3);
+  clip-path: polygon(0 28%, 50% 66%, 100% 28%, 100% 100%, 0 100%);
+}
+.op-flap {
+  position: absolute; left: 0; right: 0; top: 0; height: 66%; z-index: 3;
+  transform-origin: top center; backface-visibility: visible;
+  background: linear-gradient(180deg, #eadbbd, #dcc7a2);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.op-seal {
+  position: absolute; z-index: 4; left: 50%; top: calc(66% - 30px); width: 34px; height: 34px; margin-left: -17px;
+  border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d8424a, #8d121a);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .3);
+}
+.intro-text { text-wrap: balance; }

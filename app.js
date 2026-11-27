@@ -18,6 +18,15 @@
     ["☕", "Il regalo di oggi è in viaggio. Nel frattempo, sappi che stai benissimo anche oggi."],
   ];
 
+  const NEXT = [
+    "Domani c'è un'altra casella che ti aspetta ✨",
+    "Torna domani: la prossima sorpresa è già incartata 🎁",
+    "Ci vediamo domani, stesso calendario 😉",
+    "A domani! E niente trucchi con l'orologio 🤫",
+  ];
+  const PAST = "Questa era di qualche giorno fa: hai già aperto quella di oggi? 👀";
+  const LAST = "Buon Natale, Olly! Il calendario finisce qui 🎄";
+
   const params = new URLSearchParams(location.search);
   const previewDate = params.get("preview");
 
@@ -160,7 +169,9 @@
         t.classList.add("has-ico");
         t.insertAdjacentHTML("beforeend", DECOR.icon(ICON[day]));
       }
-      t.append(el("span", "num", day));
+      const num = el("span", "num", day);
+      if (SHAPE[day] || !ICON[day]) num.append(el("small", "mon", "dic"));
+      t.append(el("span", "frame"), num);
       if (day === 24) {
         const bow = el("span", "ribbon-bow");
         bow.innerHTML = DECOR.bow();
@@ -198,7 +209,9 @@
     return `Oggi è il ${unlocked} dicembre · ${unlocked === 1 ? "la prima casella è aperta" : unlocked + " caselle aperte"}`;
   }
 
+  let opening = false;
   async function onTile(day, tile) {
+    if (opening) return;
     if (day > state.unlocked) {
       tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
       const left = day - state.unlocked;
@@ -211,11 +224,68 @@
     if (Date.now() - fetchedAt > 2 * 3600e3) {
       try { await reload(); } catch {}
     }
-    burst(tile.getBoundingClientRect(), 18);
+    opening = true;
+    try { await playOpening(tile, day); } catch {}
+    opening = false;
     openSurprise(day);
     markSeen(day);
     tile.classList.remove("new"); tile.classList.add("seen");
     tile.querySelector(".dot")?.remove();
+  }
+
+  // Animazione: il fiocco si scioglie, la casella si solleva, luce calda, si apre la lettera
+  async function playOpening(tile, day) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const r = tile.getBoundingClientRect();
+    const color = ["c-cream", "c-red", "c-green"].find((c) => tile.classList.contains(c)) || "c-cream";
+    const ov = el("div", "opener");
+    const glow = el("div", "op-glow");
+    const card = el("div", `op-card ${color}`);
+    card.append(el("span", "op-num", day));
+    const bow = el("span", "op-bow");
+    bow.innerHTML = DECOR.bow();
+    card.append(bow);
+    Object.assign(card.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" });
+
+    const env = el("div", "op-env");
+    const letter = el("div", "op-letter");
+    letter.append(el("span", "", `${day} dicembre`), el("b", "", "Per " + C.NOME_LEI));
+    const flap = el("div", "op-flap");
+    const seal = el("i", "op-seal");
+    env.append(el("div", "op-back"), letter, el("div", "op-front"), flap, seal);
+    ov.append(glow, card, env);
+    document.body.append(ov);
+    tile.style.visibility = "hidden";
+
+    const ease = "cubic-bezier(.3,.9,.3,1)";
+    ov.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: "forwards" });
+    // 1. il fiocco si scioglie
+    await bow.animate([
+      { transform: "translate(-50%,-55%) scale(1) rotate(0)", opacity: 1 },
+      { transform: "translate(-50%,-75%) scale(1.25) rotate(-8deg)", opacity: 1, offset: .4 },
+      { transform: "translate(-50%,-160%) scale(.6) rotate(25deg)", opacity: 0 },
+    ], { duration: 650, easing: "ease-in", fill: "forwards" }).finished;
+    // 2. la casella si solleva al centro
+    const size = Math.min(220, innerWidth * .55);
+    const dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight / 2 - (r.top + r.height / 2);
+    const sc = size / Math.max(r.width, r.height);
+    glow.animate([{ transform: "translate(-50%,-50%) scale(.2)", opacity: 0 }, { transform: "translate(-50%,-50%) scale(1)", opacity: 1 }], { duration: 900, easing: "ease-out", fill: "forwards" });
+    await card.animate([
+      { transform: "translate(0,0) scale(1)", boxShadow: "0 6px 14px rgba(0,0,0,.4)" },
+      { transform: `translate(${dx}px,${dy}px) scale(${sc}) rotate(-2deg)`, boxShadow: "0 30px 60px rgba(0,0,0,.55)" },
+    ], { duration: 650, easing: ease, fill: "forwards" }).finished;
+    // 3. diventa una lettera
+    card.animate([{ opacity: 1 }, { opacity: 0, transform: `translate(${dx}px,${dy}px) scale(${sc * .8}) rotate(-2deg)` }], { duration: 300, fill: "forwards" });
+    await env.animate([{ opacity: 0, transform: "translate(-50%,-40%) scale(.85)" }, { opacity: 1, transform: "translate(-50%,-50%) scale(1)" }], { duration: 380, easing: ease, fill: "forwards" }).finished;
+    // 4. si apre la busta e la lettera esce
+    seal.animate([{ opacity: 1, transform: "scale(1)" }, { opacity: 0, transform: "scale(1.4)" }], { duration: 250, fill: "forwards" });
+    await flap.animate([{ transform: "rotateX(0)" }, { transform: "rotateX(180deg)" }], { duration: 450, easing: "ease-in-out", fill: "forwards" }).finished;
+    flap.style.zIndex = 0;
+    burst(env.getBoundingClientRect(), 22);
+    await letter.animate([{ transform: "translateY(0)" }, { transform: "translateY(-62%)" }], { duration: 550, easing: ease, fill: "forwards" }).finished;
+    await wait(150);
+    ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: "forwards" }).finished.then(() => ov.remove());
+    tile.style.visibility = "";
   }
 
   function openSurprise(day) {
@@ -239,7 +309,16 @@
         for (const f of d.media) {
           if (!f.url) continue;
           let node;
-          if (f.type === "image") { node = document.createElement("img"); node.alt = f.name || ""; node.loading = "lazy"; }
+          if (f.type === "image") {
+            node = el("figure", "polaroid");
+            node.style.setProperty("--tilt", (m.children.length % 2 ? 1.6 : -1.8) + "deg");
+            const img = document.createElement("img");
+            img.alt = f.caption || ""; img.src = f.url;
+            node.append(img);
+            if (f.caption) node.append(el("figcaption", "", f.caption));
+            m.append(node);
+            continue;
+          }
           else if (f.type === "video") { node = document.createElement("video"); node.controls = true; node.playsInline = true; node.preload = "metadata"; }
           else { node = document.createElement("audio"); node.controls = true; node.preload = "metadata"; }
           node.src = f.url;
@@ -253,6 +332,8 @@
         body.append(a);
       }
     }
+    const phrase = day === 24 ? LAST : day < state.unlocked ? PAST : NEXT[day % NEXT.length];
+    body.append(el("p", "see-you", phrase));
     const dlg = $("surprise");
     dlg.showModal();
     dlg.scrollTop = 0;

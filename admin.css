@@ -102,3 +102,7 @@ button:disabled { opacity: .55; cursor: wait; }
   transition: .3s ease; pointer-events: none;
 }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+.media-list .name { display: grid; gap: 2px; }
+.media-list .name small { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.media-list .caption { padding: 6px 10px; font-size: 15px; border-radius: 8px; }

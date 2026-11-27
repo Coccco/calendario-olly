@@ -202,6 +202,17 @@
       else th.textContent = m.type === "video" ? "🎬" : m.type === "audio" ? "🎧" : "🖼️";
       const name = document.createElement("span");
       name.className = "name"; name.textContent = m.name;
+      if (m.type === "image") {
+        name.textContent = "";
+        const cap = document.createElement("input");
+        cap.className = "caption"; cap.maxLength = 80;
+        cap.placeholder = "Didascalia (facoltativa)";
+        cap.value = m.caption || "";
+        cap.addEventListener("input", () => { m.caption = cap.value.trim(); });
+        const fn = document.createElement("small");
+        fn.textContent = m.name;
+        name.append(cap, fn);
+      }
       const del = document.createElement("button");
       del.type = "button"; del.textContent = "Togli";
       del.addEventListener("click", async () => {

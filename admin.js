@@ -4,6 +4,11 @@
   const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY);
   const MAX = 50 * 1024 * 1024;
 
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  };
+  if (window.DECOR) DECOR.mount();
   let cal = null;       // il calendario di questo admin: { slug, her_name, signature, intro, code }
   let days = new Map(); // giorno -> riga
   const her = () => (cal && cal.her_name) || "lei";
@@ -72,7 +77,6 @@
       if (error) throw new Error("Calendario creato, ma il login non è riuscito: prova a entrare.");
       $("signup").hidden = true;
       await showPanel();
-      $("settings").open = true;
       toast("Calendario creato 🎉 Ora riempi le caselle!");
     } catch (ex) {
       err.textContent = ex.message;
@@ -112,27 +116,110 @@
 
   const isFilled = (r) => r && (r.title || r.message || r.link_url || (r.media && r.media.length));
 
+  // Piccole icone a linee per il tipo di contenuto
+  const SVG = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+  const KIND = {
+    text: ["Messaggio", SVG("M5 4h14v16H5zM8 8h8M8 12h8M8 16h5")],
+    image: ["Foto", SVG("M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01")],
+    video: ["Video", SVG("M3 6h13v12H3zM16 10l5-3v10l-5-3")],
+    audio: ["Audio", SVG("M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3")],
+    link: ["Link", SVG("M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1")],
+    voucher: ["Buono", SVG("M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10")],
+  };
+  const ILL = ["star", "sprig", "gift", "tree", "mug", "candycane", "snowflake", "ornaments", "lantern", "reindeer", "house", "pinecone",
+    "stars", "candle", "village", "mountains", "holly", "mug", "tree", "gift", "snowflake", "star", "candle", "ornaments"];
+
+  function kindsOf(r) {
+    if (!r) return [];
+    const k = [];
+    if (r.message) k.push("text");
+    for (const t of ["image", "video", "audio", "voucher"]) if ((r.media || []).some((m) => m.type === t)) k.push(t);
+    if (r.link_url) k.push("link");
+    return k;
+  }
+  const kindIcons = (r) => kindsOf(r).map((k) => `<i title="${KIND[k][0]}">${KIND[k][1]}</i>`).join("");
+  const firstEmpty = () => { for (let d = 1; d <= 24; d++) if (!isFilled(days.get(d))) return d; return 0; };
+
   function renderDays() {
-    const box = $("days");
-    box.textContent = "";
+    const box = $("days"), list = $("days-list"), nl = $("notify-list");
+    box.textContent = ""; list.textContent = ""; nl.textContent = "";
     const v = visibleUpTo();
+    let ready = 0;
     for (let d = 1; d <= 24; d++) {
       const r = days.get(d);
+      const filled = !!isFilled(r);
+      if (filled) ready++;
+      const files = (r?.media || []).filter((m) => m.type !== "voucher").length;
+
+      // casella nella griglia
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "day" + (d <= v ? " visible" : "");
-      const filled = isFilled(r);
-      const media = (r?.media || []).filter((m) => m.type !== "voucher").length;
+      b.className = "day " + (filled ? "ready" : "empty") + (d <= v ? " visible" : "");
       b.innerHTML = `
-        <span class="pill ${filled ? "ready" : "empty"}">${filled ? "pronto" : "vuoto"}</span>
         <span class="n">${d}</span>
+        <span class="pill">${filled ? "✓ Pronta" : "○ Vuota"}</span>
         <span class="t"></span>
-        <span class="meta">${media ? media + (media === 1 ? " file" : " file") : ""}${r?.link_url ? (media ? " · " : "") + "link" : ""}</span>`;
-      b.querySelector(".t").textContent = r?.title || (filled ? "(senza titolo)" : "Tocca per riempire");
+        ${filled ? `<span class="meta">${files ? `<span class="files">${SVG("M7 3h7l4 4v14H7zM14 3v4h4")} ${files} file</span>` : ""}<span class="kinds">${kindIcons(r)}</span></span>` : `<span class="plus" aria-hidden="true">+</span>`}
+        <span class="ill">${window.DECOR ? DECOR.icon(ILL[d - 1]) : ""}</span>`;
+      b.querySelector(".t").textContent = filled ? (r.title || "(senza titolo)") : "Tocca per riempire";
+      b.setAttribute("aria-label", `${d} dicembre, ${filled ? "pronta" : "vuota"}`);
       b.addEventListener("click", () => openEditor(d));
       box.appendChild(b);
+
+      // riga nella lista
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "lrow " + (filled ? "ready" : "empty");
+      row.innerHTML = `<span class="ln">${d}</span><span class="lt"></span><span class="kinds">${kindIcons(r)}</span><span class="pill">${filled ? "✓ Pronta" : "○ Vuota"}</span>`;
+      row.querySelector(".lt").textContent = filled ? (r.title || "(senza titolo)") : "—";
+      row.addEventListener("click", () => openEditor(d));
+      list.appendChild(row);
+
+      // riga nelle notifiche
+      const nr = document.createElement("button");
+      nr.type = "button";
+      nr.className = "lrow nrow";
+      nr.innerHTML = `<span class="ln">${d}</span><span class="lt"><small>ore 8</small><span class="m"></span><small>ore 20</small><span class="e"></span></span>`;
+      nr.querySelector(".m").textContent = r?.notify_morning || "Messaggio predefinito";
+      nr.querySelector(".e").textContent = r?.notify_evening || "Messaggio predefinito";
+      if (!r?.notify_morning) nr.querySelector(".m").classList.add("def");
+      if (!r?.notify_evening) nr.querySelector(".e").classList.add("def");
+      nr.addEventListener("click", () => openEditor(d));
+      nl.appendChild(nr);
     }
+    const pct = Math.round((ready / 24) * 100);
+    $("st-ready").textContent = ready;
+    $("st-todo").textContent = 24 - ready;
+    $("pr-pct").textContent = pct + "%";
+    $("pr-bar").style.width = pct + "%";
+    $("pr-line").textContent = `${ready} ${ready === 1 ? "sorpresa" : "sorprese"} su 24 ${ready === 1 ? "pronta" : "pronte"}`;
+    $("continue").textContent = ready === 24 ? "Tutto pronto 🎉 Rivedi le caselle" : "Continua a creare le sorprese →";
   }
+
+  // ---------- schede e viste ----------
+  function showTab(name) {
+    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+    document.querySelectorAll(".pane").forEach((p) => (p.hidden = p.dataset.pane !== name));
+    $("view-switch").hidden = name !== "caselle";
+  }
+  document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));
+  function setView(v) {
+    document.querySelectorAll("#view-switch [data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
+    $("days").hidden = v !== "grid";
+    $("days-list").hidden = v !== "list";
+    store.set("admin-vista", v);
+  }
+  document.querySelectorAll("#view-switch [data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+  const go = (tab, field) => { showTab(tab); $(field).focus(); $(field).scrollIntoView({ behavior: "smooth", block: "center" }); };
+  $("go-name").addEventListener("click", () => go("grafica", "s-her"));
+  $("go-code").addEventListener("click", () => go("impostazioni", "s-code"));
+  $("continue").addEventListener("click", () => {
+    const d = firstEmpty();
+    if (d) openEditor(d);
+    else { showTab("caselle"); $("days").scrollIntoView({ behavior: "smooth" }); }
+  });
+  $("preview-quick").addEventListener("click", () => $("preview-btn").click());
+  setView(store.get("admin-vista") === "list" ? "list" : "grid");
 
   // ---------- editor ----------
   const dlg = $("editor");
@@ -386,22 +473,33 @@
     $("s-code").value = cal.code || "";
     $("s-code").placeholder = cal.slug === "olly" ? "(quella già impostata in Supabase)" : "Es. il nome del vostro posto";
     $("s-link").value = herLink();
-    $("s-notify-line").textContent = `Notifiche: ogni giorno alle 8 e, se non ha ancora aperto la casella, alle 20. ${her()} le attiva con il bottone 🔔 nel calendario.`;
-    if (!cal.her_name || (!cal.code && cal.slug !== "olly")) $("settings").open = true;
+    $("s-notify-line").textContent = `Ogni giorno alle 8 e, se non ha ancora aperto la casella, alle 20. ${her()} le attiva con il bottone 🔔 nel calendario.`;
+    document.querySelectorAll(".her-name").forEach((n) => (n.textContent = her()));
+    peek();
+    if (!cal.her_name) showTab("grafica");
+    else if (!cal.code && cal.slug !== "olly") showTab("impostazioni");
   }
+  function peek() {
+    $("peek-her").textContent = $("s-her").value.trim() || "lei";
+    $("peek-intro").textContent = $("s-intro").value.trim();
+    $("peek-sign").textContent = $("s-sign").value.trim();
+  }
+  ["s-her", "s-intro", "s-sign"].forEach((id) => $(id).addEventListener("input", peek));
 
   $("settings-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     $("s-error").textContent = "";
     const code = $("s-code").value.trim();
-    if (!code && cal.slug !== "olly") return ($("s-error").textContent = "Scegli una parola segreta, sennò lei non può entrare.");
+    if (!$("s-her").value.trim()) { showTab("grafica"); return ($("s-error").textContent = "Scrivi il nome di lei."); }
+    if (!code && cal.slug !== "olly") { showTab("impostazioni"); return ($("s-error").textContent = "Scegli una parola segreta, sennò lei non può entrare."); }
     const patch = {
       her_name: $("s-her").value.trim(), signature: $("s-sign").value.trim(),
       intro: $("s-intro").value.trim(), code: code || null,
     };
-    $("s-save").disabled = true;
+    const saves = document.querySelectorAll(".s-save");
+    saves.forEach((b) => (b.disabled = true));
     const { data, error } = await sb.from("calendars").update(patch).eq("slug", cal.slug).select().single();
-    $("s-save").disabled = false;
+    saves.forEach((b) => (b.disabled = false));
     if (error) return ($("s-error").textContent = "Non salvato: " + error.message);
     cal = data;
     fillSettings();
@@ -429,10 +527,12 @@
     } finally { btn.disabled = false; }
   });
 
-  $("s-copy").addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(herLink()); toast("Link copiato"); }
-    catch { $("s-link").select(); }
-  });
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(herLink()); toast("Link copiato 🔗"); }
+    catch { go("impostazioni", "s-link"); $("s-link").select(); }
+  };
+  $("s-copy").addEventListener("click", copyLink);
+  $("s-copy2").addEventListener("click", copyLink);
 
   let toastTimer;
   function toast(text) {

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#10261b">
+  <title>Calendario dell'avvento</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="snow" aria-hidden="true"></div>
+  <div class="branch left" aria-hidden="true"></div>
+  <div class="branch right" aria-hidden="true"></div>
+
+  <!-- Schermata 1: il pacchetto da aprire -->
+  <main id="intro" class="screen intro">
+    <p class="kicker">Dicembre è arrivato</p>
+    <h1 class="intro-title">C'è qualcosa<br><em>per te</em></h1>
+
+    <button id="gift" class="gift" type="button" aria-label="Apri il pacchetto">
+      <span class="gift-glow"></span>
+      <span class="gift-box"><span class="tag" id="tag-name">Olly</span></span>
+      <span class="gift-lid"></span>
+      <span class="gift-bow" data-bow></span>
+    </button>
+    <p class="hint" id="gift-hint">Tocca il fiocco per aprire</p>
+
+    <form id="code-form" class="code-form" hidden>
+      <label for="code">Qual è la parola segreta?</label>
+      <div class="code-row">
+        <input id="code" name="code" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+        <button type="submit">Entra</button>
+      </div>
+      <p class="code-error" id="code-error" role="alert"></p>
+    </form>
+  </main>
+
+  <!-- Schermata 2: il calendario -->
+  <main id="calendar" class="screen calendar" hidden>
+    <div id="preview-bar" class="preview-bar" hidden>
+      Anteprima admin del <input type="date" id="preview-date" min="2026-11-25" max="2026-12-26">
+    </div>
+    <header class="cal-head">
+      <p class="kicker">Per</p>
+      <h1 class="name"><span id="her-name">Olly</span><span class="heart" data-heart></span></h1>
+      <div class="divider"><span></span><i data-bow></i><span></span></div>
+      <p class="intro-text" id="intro-text"></p>
+      <p class="signature" id="signature"></p>
+      <p class="status" id="status"></p>
+    </header>
+    <section class="grid" id="grid" aria-label="Caselle dal 1 al 24 dicembre"></section>
+    <div class="ground" aria-hidden="true"></div>
+  </main>
+
+  <!-- Finestra della sorpresa -->
+  <dialog id="surprise" class="surprise">
+    <article class="sheet">
+      <button class="close" type="button" aria-label="Chiudi">×</button>
+      <p class="kicker" id="s-date"></p>
+      <h2 id="s-title"></h2>
+      <div class="sheet-bow" data-bow></div>
+      <div id="s-body"></div>
+    </article>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="config.js"></script>
+  <script src="decor.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

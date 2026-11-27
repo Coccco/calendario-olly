@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Admin · Calendario</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔑</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- Login -->
+  <main id="login" class="wrap narrow" hidden>
+    <h1>Area di Cocco 🔑</h1>
+    <form id="login-form" class="card">
+      <label>Email <input type="email" id="email" autocomplete="username" required></label>
+      <label>Password <input type="password" id="password" autocomplete="current-password" required></label>
+      <button class="primary" type="submit">Entra</button>
+      <p class="error" id="login-error" role="alert"></p>
+    </form>
+  </main>
+
+  <!-- Pannello -->
+  <main id="panel" class="wrap" hidden>
+    <header class="top">
+      <div>
+        <h1>Le sorprese di Olly</h1>
+        <p class="muted" id="today-line"></p>
+      </div>
+      <button id="logout" class="ghost" type="button">Esci</button>
+    </header>
+
+    <section class="card preview">
+      <strong>Anteprima</strong>
+      <span class="muted">Guarda il calendario come lo vedrà lei in una data a scelta.</span>
+      <div class="row">
+        <input type="date" id="preview-date" value="2026-12-01" min="2026-11-25" max="2026-12-26">
+        <button id="preview-btn" class="primary" type="button">Apri anteprima</button>
+      </div>
+    </section>
+
+    <section class="days" id="days"></section>
+  </main>
+
+  <!-- Modifica di un giorno -->
+  <dialog id="editor" class="editor">
+    <form id="day-form" method="dialog">
+      <header class="ed-head">
+        <h2 id="ed-title">1 dicembre</h2>
+        <button type="button" class="ghost" id="ed-close" aria-label="Chiudi">×</button>
+      </header>
+      <p class="badge-line" id="ed-badge"></p>
+
+      <label>Titolo <input id="f-title" maxlength="120" placeholder="Es. Il nostro primo appuntamento"></label>
+      <label>Messaggio <textarea id="f-message" rows="6" placeholder="Scrivile qualcosa…"></textarea></label>
+      <div class="two">
+        <label>Link <input id="f-link" type="url" placeholder="https://…"></label>
+        <label>Testo del bottone <input id="f-link-label" maxlength="60" placeholder="Ascolta la playlist 🎶"></label>
+      </div>
+
+      <div class="media-block">
+        <strong>Foto, video e audio</strong>
+        <ul class="media-list" id="media-list"></ul>
+        <label class="upload">
+          <input type="file" id="file" accept="image/*,video/*,audio/*" multiple>
+          <span>+ Aggiungi file (max 50 MB l'uno)</span>
+        </label>
+        <p class="muted small" id="upload-status"></p>
+      </div>
+
+      <footer class="ed-foot">
+        <button type="button" class="ghost danger" id="clear-day">Svuota giorno</button>
+        <button type="submit" class="primary" id="save">Salva</button>
+      </footer>
+      <p class="error" id="save-error" role="alert"></p>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

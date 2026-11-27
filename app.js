@@ -1,0 +1,342 @@
+(() => {
+  const C = window.CONFIG;
+  const $ = (id) => document.getElementById(id);
+  const CODE_KEY = "avvento-codice";
+  const SEEN_KEY = "avvento-visti";
+
+  // Ordine "mescolato" delle caselle e forme del mosaico
+  const ORDER = [24, 3, 11, 7, 21, 15, 1, 12, 18, 5, 4, 9, 20, 2, 14, 17, 6, 13, 8, 10, 22, 19, 16, 23];
+  const SHAPE = { 24: "big", 11: "w2", 12: "w2", 10: "w2", 16: "w2", 6: "w2", 17: "w2", 4: "w2", 20: "w2", 9: "w2", 19: "w2", 5: "h2", 13: "h2", 21: "h2" };
+  const GREEN = [11, 18, 4, 2, 13, 19], RED = [7, 15, 12, 20, 17, 10, 23];
+  const ICON = { 11: "tree", 15: "mug", 12: "mountains", 21: "ornaments", 5: "holly", 20: "candle", 6: "sprig", 10: "house", 16: "stars", 1: "star", 13: "lantern", 18: "snowflake", 17: "gift" };
+
+  const EMPTY = [
+    ["💌", "La sorpresa di oggi si sta ancora incartando da sola… torna più tardi, ne vale la pena."],
+    ["🤫", "Oggi la sorpresa è segreta anche per il calendario. Chiedi a Cocco, forse è in tasca sua."],
+    ["🫶", "Oggi niente pacchetto qui dentro: vale un abbraccio, da riscuotere appena vi vedete."],
+    ["⭐", "Questa casella oggi custodisce solo una cosa: un bacio. Da ritirare di persona."],
+    ["☕", "Il regalo di oggi è in viaggio. Nel frattempo, sappi che stai benissimo anche oggi."],
+  ];
+
+  const params = new URLSearchParams(location.search);
+  const previewDate = params.get("preview");
+
+  let state = null; // { today, unlocked, days: Map }
+  let fetchedAt = 0;
+  let creds = {};   // { code } oppure { preview_date, token }
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+    del(k) { try { localStorage.removeItem(k); } catch {} },
+  };
+
+  // ---------- testi e neve ----------
+  DECOR.mount();
+  $("tag-name").textContent = C.NOME_LEI;
+  $("her-name").textContent = C.NOME_LEI;
+  $("intro-text").textContent = C.INTRO;
+  $("signature").textContent = C.FIRMA;
+  document.title = `Per ${C.NOME_LEI} 🎁`;
+
+  const snow = document.querySelector(".snow");
+  for (let i = 0; i < 26; i++) {
+    const f = document.createElement("i");
+    f.style.left = Math.random() * 100 + "%";
+    f.style.setProperty("--s", 2 + Math.random() * 4 + "px");
+    f.style.setProperty("--d", 9 + Math.random() * 12 + "s");
+    f.style.setProperty("--delay", -Math.random() * 20 + "s");
+    f.style.setProperty("--drift", (Math.random() * 80 - 40) + "px");
+    snow.appendChild(f);
+  }
+
+  // ---------- server ----------
+  async function fetchCalendar(body, token) {
+    const res = await fetch(`${C.SUPABASE_URL}/functions/v1/calendar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: C.SUPABASE_KEY,
+        Authorization: `Bearer ${token || C.SUPABASE_KEY}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) throw new Error("codice");
+    if (!res.ok) throw new Error("server");
+    const data = await res.json();
+    fetchedAt = Date.now();
+    return { ...data, days: new Map(data.days.map((d) => [d.day, d])) };
+  }
+
+  async function reload() {
+    const { token, ...body } = creds;
+    state = await fetchCalendar(body, token);
+    render();
+  }
+
+  // ---------- intro ----------
+  const gift = $("gift");
+  gift.addEventListener("click", async () => {
+    if (gift.classList.contains("open")) return;
+    gift.classList.add("open");
+    $("gift-hint").hidden = true;
+    burst(gift.getBoundingClientRect(), 26);
+    await wait(750);
+
+    const saved = store.get(CODE_KEY);
+    if (saved) {
+      try {
+        creds = { code: saved };
+        await reload();
+        return showCalendar();
+      } catch (e) {
+        if (e.message === "codice") store.del(CODE_KEY);
+        else return showCodeForm("Il calendario non risponde. Riprova tra un attimo.");
+      }
+    }
+    showCodeForm();
+  });
+
+  function showCodeForm(msg = "") {
+    $("code-form").hidden = false;
+    $("code-error").textContent = msg;
+    $("code").focus();
+  }
+
+  $("code-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const btn = ev.submitter || ev.target.querySelector("button");
+    const code = $("code").value;
+    btn.disabled = true;
+    $("code-error").textContent = "";
+    try {
+      creds = { code };
+      await reload();
+      store.set(CODE_KEY, code);
+      showCalendar();
+    } catch (e) {
+      $("code-error").textContent = e.message === "codice"
+        ? "Mmm, non è questa. Riprova 💭"
+        : "Il calendario non risponde. Riprova tra un attimo.";
+      const f = $("code-form");
+      f.classList.remove("shake"); void f.offsetWidth; f.classList.add("shake");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function showCalendar() {
+    $("intro").hidden = true;
+    $("calendar").hidden = false;
+    document.body.classList.add("in-calendar");
+    document.querySelector('meta[name="theme-color"]').content = "#2a0b12";
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- calendario ----------
+  function seenSet() {
+    try { return new Set(JSON.parse(store.get(SEEN_KEY) || "[]")); } catch { return new Set(); }
+  }
+  function markSeen(day) {
+    if (previewDate) return;
+    const s = seenSet(); s.add(day);
+    store.set(SEEN_KEY, JSON.stringify([...s]));
+  }
+
+  function render() {
+    const { unlocked, today } = state;
+    const seen = previewDate ? new Set() : seenSet();
+    const todayNum = today.startsWith("2026-12-") ? Number(today.slice(8)) : 0;
+    const grid = $("grid");
+    grid.textContent = "";
+
+    ORDER.forEach((day, i) => {
+      const t = document.createElement("button");
+      t.type = "button";
+      const color = GREEN.includes(day) ? "c-green" : RED.includes(day) ? "c-red" : "c-cream";
+      t.className = `tile ${SHAPE[day] || "sq"} ${color}`;
+      t.style.setProperty("--i", i);
+      if (ICON[day] && day !== 24) {
+        t.classList.add("has-ico");
+        t.insertAdjacentHTML("beforeend", DECOR.icon(ICON[day]));
+      }
+      t.append(el("span", "num", day));
+      if (day === 24) {
+        const bow = el("span", "ribbon-bow");
+        bow.innerHTML = DECOR.bow();
+        const holly = el("span", "holly");
+        holly.innerHTML = DECOR.icon("holly");
+        t.prepend(bow, holly);
+        t.append(el("span", "label", "Natale"));
+      }
+      if (day > unlocked) {
+        t.classList.add("locked");
+        t.append(el("span", "lock"));
+        t.setAttribute("aria-label", `${day} dicembre, ancora chiusa`);
+      } else {
+        t.classList.add(seen.has(day) ? "seen" : "new");
+        if (!seen.has(day)) t.append(el("span", "dot"));
+        if (day === todayNum) {
+          t.classList.add("today");
+          if (day !== 24) t.append(el("span", "label", "Oggi"));
+        }
+        t.setAttribute("aria-label", `${day} dicembre, da aprire`);
+      }
+      t.addEventListener("click", () => onTile(day, t));
+      grid.appendChild(t);
+    });
+
+    $("status").textContent = statusText(today, unlocked);
+  }
+
+  function statusText(today, unlocked) {
+    if (unlocked === 0) {
+      const days = Math.round((Date.parse("2026-12-01") - Date.parse(today)) / 864e5);
+      return days === 1 ? "Domani si apre la prima casella ✨" : `Mancano ${days} giorni alla prima casella ✨`;
+    }
+    if (unlocked >= 24) return today === "2026-12-24" ? "È la vigilia! Oggi si apre il regalo grande 🎄" : "Tutte le caselle sono aperte 🎄";
+    return `Oggi è il ${unlocked} dicembre · ${unlocked === 1 ? "la prima casella è aperta" : unlocked + " caselle aperte"}`;
+  }
+
+  async function onTile(day, tile) {
+    if (day > state.unlocked) {
+      tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+      const left = day - state.unlocked;
+      toast(left === 1 && state.unlocked > 0
+        ? `Questa si apre domani. Resisti ancora un po' 🤫`
+        : `Si apre il ${day} dicembre. Niente sbirciatine 🤫`);
+      return;
+    }
+    // i link ai file scadono: se è passato tanto tempo, ricarica prima
+    if (Date.now() - fetchedAt > 2 * 3600e3) {
+      try { await reload(); } catch {}
+    }
+    burst(tile.getBoundingClientRect(), 18);
+    openSurprise(day);
+    markSeen(day);
+    tile.classList.remove("new"); tile.classList.add("seen");
+    tile.querySelector(".dot")?.remove();
+  }
+
+  function openSurprise(day) {
+    const d = state.days.get(day);
+    const body = $("s-body");
+    body.textContent = "";
+    $("s-date").textContent = `${day} dicembre`;
+
+    const hasContent = d && (d.title || d.message || d.link_url || (d.media && d.media.length));
+    if (!hasContent) {
+      const [emoji, text] = EMPTY[day % EMPTY.length];
+      $("s-title").textContent = "Un attimo di pazienza";
+      const box = el("div", "empty");
+      box.append(el("div", "big-emoji", emoji), el("p", "", text));
+      body.append(box);
+    } else {
+      $("s-title").textContent = d.title || (day === 24 ? "Buon Natale!" : "La sorpresa di oggi");
+      if (d.message) body.append(el("p", "message", d.message));
+      if (d.media && d.media.length) {
+        const m = el("div", "media");
+        for (const f of d.media) {
+          if (!f.url) continue;
+          let node;
+          if (f.type === "image") { node = document.createElement("img"); node.alt = f.name || ""; node.loading = "lazy"; }
+          else if (f.type === "video") { node = document.createElement("video"); node.controls = true; node.playsInline = true; node.preload = "metadata"; }
+          else { node = document.createElement("audio"); node.controls = true; node.preload = "metadata"; }
+          node.src = f.url;
+          m.append(node);
+        }
+        body.append(m);
+      }
+      if (/^https?:\/\//i.test(d.link_url || "")) {
+        const a = el("a", "link-btn", d.link_label || "Apri il link ✨");
+        a.href = d.link_url; a.target = "_blank"; a.rel = "noopener";
+        body.append(a);
+      }
+    }
+    const dlg = $("surprise");
+    dlg.showModal();
+    dlg.scrollTop = 0;
+  }
+
+  const dlg = $("surprise");
+  dlg.querySelector(".close").addEventListener("click", () => dlg.close());
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener("close", () => dlg.querySelectorAll("video, audio").forEach((m) => m.pause()));
+
+  // Se la pagina resta aperta (es. passa la mezzanotte), aggiorna al rientro
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && state && Date.now() - fetchedAt > 10 * 60e3) {
+      reload().catch(() => {});
+    }
+  });
+
+  // ---------- piccoli aiuti ----------
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+  let toastTimer;
+  function toast(text) {
+    const t = $("toast");
+    t.textContent = text;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  function burst(rect, n) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const colors = ["#e3b860", "#f6eee2", "#d9463a", "#ffd98a"];
+    for (let i = 0; i < n; i++) {
+      const s = el("span", "sparkle");
+      const a = Math.random() * Math.PI * 2, r = 60 + Math.random() * 110;
+      s.style.left = rect.left + rect.width / 2 + "px";
+      s.style.top = rect.top + rect.height / 2 + "px";
+      s.style.background = colors[i % colors.length];
+      s.style.setProperty("--x", Math.cos(a) * r + "px");
+      s.style.setProperty("--y", Math.sin(a) * r + "px");
+      s.style.setProperty("--r", Math.random() * 540 + "deg");
+      document.body.append(s);
+      setTimeout(() => s.remove(), 1100);
+    }
+  }
+
+  // ---------- anteprima admin ----------
+  async function startPreview() {
+    $("intro").hidden = true;
+    $("preview-bar").hidden = false;
+    const input = $("preview-date");
+    input.value = previewDate;
+    await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js");
+    const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY);
+    const { data } = await sb.auth.getSession();
+    if (!data.session) {
+      document.body.innerHTML = '<p style="padding:24px">Per l\'anteprima fai prima il login nella pagina admin.</p>';
+      return;
+    }
+    creds = { preview_date: previewDate, token: data.session.access_token };
+    try {
+      await reload();
+      showCalendar();
+    } catch {
+      document.body.innerHTML = '<p style="padding:24px">Anteprima non permessa: rifai il login nella pagina admin.</p>';
+    }
+    input.addEventListener("change", () => {
+      if (input.value) location.search = `?preview=${input.value}`;
+    });
+  }
+
+  function loadScript(src) {
+    return new Promise((ok, ko) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = ok; s.onerror = ko;
+      document.head.append(s);
+    });
+  }
+
+  if (previewDate) startPreview();
+})();

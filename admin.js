@@ -155,6 +155,10 @@
     $("f-link").value = current.link_url;
     $("f-link-label").value = current.link_label;
     $("f-voucher").value = (current.media.find((m) => m.type === "voucher") || {}).caption || "";
+    $("f-notify-m").value = current.notify_morning || "";
+    $("f-notify-e").value = current.notify_evening || "";
+    $("f-notify-m").placeholder = `Buongiorno${cal.her_name ? " " + cal.her_name : ""}! La casella del ${day} dicembre è pronta da aprire 🎁`;
+    $("f-notify-e").placeholder = `La sorpresa del ${day} dicembre ti sta ancora aspettando 👀`;
     $("upload-status").textContent = "";
     $("save-error").textContent = "";
     renderMedia();
@@ -166,6 +170,8 @@
     current.message = $("f-message").value.trim();
     current.link_url = $("f-link").value.trim();
     current.link_label = $("f-link-label").value.trim();
+    current.notify_morning = $("f-notify-m").value.trim();
+    current.notify_evening = $("f-notify-e").value.trim();
     const v = $("f-voucher").value.trim();
     current.media = current.media.filter((m) => m.type !== "voucher");
     if (v) current.media.push({ type: "voucher", caption: v, name: "buono" });
@@ -303,6 +309,7 @@
     $("s-code").value = cal.code || "";
     $("s-code").placeholder = cal.slug === "olly" ? "(quella già impostata in Supabase)" : "Es. il nome del vostro posto";
     $("s-link").value = herLink();
+    $("s-notify-line").textContent = `Notifiche: ogni giorno alle 8 e, se non ha ancora aperto la casella, alle 20. ${her()} le attiva con il bottone 🔔 nel calendario.`;
     if (!cal.her_name || (!cal.code && cal.slug !== "olly")) $("settings").open = true;
   }
 
@@ -323,6 +330,26 @@
     fillSettings();
     renderDays();
     toast("Calendario salvato 💛");
+  });
+
+  $("s-test").addEventListener("click", async () => {
+    const btn = $("s-test");
+    btn.disabled = true;
+    try {
+      const { data } = await sb.auth.getSession();
+      const res = await fetch(`${C.SUPABASE_URL}/functions/v1/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: C.SUPABASE_KEY, Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ test: true }),
+      });
+      const r = await res.json();
+      if (!res.ok) throw new Error();
+      $("s-notify-line").textContent = r.devices
+        ? `Notifiche: attive su ${r.devices} ${r.devices === 1 ? "telefono" : "telefoni"}. Prova mandata a ${r.sent}.`
+        : `Notifiche: ${her()} non le ha ancora attivate (bottone 🔔 nel calendario).`;
+    } catch {
+      $("s-notify-line").textContent = "Notifiche: non riesco a mandare la prova, riprova tra poco.";
+    } finally { btn.disabled = false; }
   });
 
   $("s-copy").addEventListener("click", async () => {

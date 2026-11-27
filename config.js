@@ -4,6 +4,7 @@ window.CONFIG = {
   SUPABASE_URL: "https://edmzapnarznzpuvslkvr.supabase.co",
   SUPABASE_KEY: "sb_publishable_Z1wzbm4XH-nhJZNTI4Ywww_YVbvtomL", // "Publishable key" o "anon public"
 
+  VAPID_PUBLIC: "BKv6VPGa-iQpTlWvEVRl1Ov5q9KFQOiynUBu5rjIY54WWr3GhxEZqxqWnd8NjosikzR9Qczlq_dHN94p2PGrDEU", // chiave pubblica per le notifiche
   NOME_LEI: "Olly",
   FIRMA: "Cocco",
   INTRO: "Una piccola sorpresa al giorno, fino a Natale.",

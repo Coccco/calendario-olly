@@ -661,3 +661,14 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .sheet.enter *, .htag.swing, .tile.today .num, .sheet.xmas h2 { animation: none !important; }
 }
+
+/* --- notifiche --- */
+.notify { margin: 14px auto 0; max-width: 24em; }
+.notify-btn {
+  font: inherit; font-size: 17px; color: var(--ink); background: var(--gold-soft);
+  border: 0; border-radius: 999px; padding: 9px 20px; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+}
+.notify-btn:disabled { opacity: .6; }
+.notify-note { margin: 8px 0 0; font-size: 15px; font-style: italic; color: var(--gold-soft); opacity: .9; }
+.notify-note:empty { display: none; }

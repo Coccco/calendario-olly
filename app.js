@@ -2,7 +2,14 @@
   const C = window.CONFIG;
   const $ = (id) => document.getElementById(id);
   // Ogni coppia ha il suo calendario: ?c=nome. Senza parametro è quello di Olly.
-  const SLUG = (new URLSearchParams(location.search).get("c") || "olly").trim().toLowerCase();
+  const SLUG = (new URLSearchParams(location.search).get("c") || (C.DEFAULT_SLUG ?? "olly")).trim().toLowerCase();
+  if (!SLUG) {
+    // Sito senza calendario predefinito: serve il link personale.
+    document.querySelector("#intro .intro-title").innerHTML = "Ti serve<br><em>il tuo link</em>";
+    document.querySelector("#intro .kicker").textContent = "Calendario dell'avvento";
+    for (const id of ["gift", "gift-hint", "code-form"]) document.getElementById(id).hidden = true;
+    return;
+  }
   const IS_DEFAULT = SLUG === "olly";
   const CODE_KEY = IS_DEFAULT ? "avvento-codice" : `avvento-codice-${SLUG}`;
   const SEEN_KEY = IS_DEFAULT ? "avvento-visti" : `avvento-visti-${SLUG}`;
@@ -60,7 +67,7 @@
     if (t) t.content = names.her ? `Per ${names.her}` : "Avvento";
   }
   applyNames();
-  if (!IS_DEFAULT) {
+  if (!IS_DEFAULT && C.DEFAULT_SLUG === undefined) {
     // App sulla schermata Home: deve riaprire questo calendario, non quello di Olly.
     const base = new URL("./", location.href).href;
     const link = document.querySelector('link[rel="manifest"]');
@@ -76,6 +83,8 @@
       };
       link.href = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(m));
     }
+  }
+  if (!IS_DEFAULT) {
     fetch(`${C.SUPABASE_URL}/functions/v1/calendar`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: C.SUPABASE_KEY, Authorization: `Bearer ${C.SUPABASE_KEY}` },
@@ -180,11 +189,74 @@
   });
 
   function showCalendar() {
+    setupNotify();
     $("intro").hidden = true;
     $("calendar").hidden = false;
     document.body.classList.add("in-calendar");
     document.querySelector('meta[name="theme-color"]').content = "#2a0b12";
     window.scrollTo(0, 0);
+  }
+
+  // ---------- notifiche ----------
+  const api = (body) => fetch(`${C.SUPABASE_URL}/functions/v1/calendar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: C.SUPABASE_KEY, Authorization: `Bearer ${C.SUPABASE_KEY}` },
+    body: JSON.stringify({ ...body, calendar: SLUG }),
+  });
+  const NOTIFY_KEY = `avvento-notifiche-${SLUG}`;
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const b64 = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js?v=1").catch(() => {});
+
+  async function subscribe() {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription())
+      || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(C.VAPID_PUBLIC) });
+    const res = await api({ action: "subscribe", code: creds.code, subscription: sub.toJSON(), page_url: location.href.split("#")[0] });
+    if (!res.ok) throw new Error("server");
+    store.set(NOTIFY_KEY, "1");
+  }
+
+  function setupNotify() {
+    if (previewDate || !creds.code || !C.VAPID_PUBLIC || $("notify")) return;
+    const box = el("div", "notify");
+    box.id = "notify";
+    const btn = el("button", "notify-btn", "🔔 Avvisami ogni mattina alle 8");
+    btn.type = "button";
+    const note = el("p", "notify-note");
+    box.append(btn, note);
+    document.querySelector(".cal-head").append(box);
+
+    const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    const done = () => { btn.hidden = true; note.textContent = "🔔 Notifiche attive: ti avviso alle 8 quando c'è una nuova casella."; };
+
+    if (!supported) {
+      if (isIOS && !standalone) {
+        btn.hidden = true;
+        note.innerHTML = "Vuoi un avviso ogni mattina? Tocca <b>Condividi</b> e poi <b>Aggiungi alla schermata Home</b>, poi apri il calendario dall'icona.";
+      } else box.hidden = true;
+      return;
+    }
+    if (Notification.permission === "denied") { box.hidden = true; return; }
+    if (Notification.permission === "granted") {
+      // Già consentite: rinnova l'iscrizione in silenzio (es. dopo un cambio di telefono).
+      subscribe().then(done).catch(() => {});
+      if (store.get(NOTIFY_KEY)) done();
+    }
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") { box.hidden = true; return; }
+        await subscribe();
+        done();
+        toast("Fatto! Domattina alle 8 ti avviso 🔔");
+      } catch {
+        note.textContent = "Non sono riuscito ad attivarle, riprova più tardi.";
+      } finally { btn.disabled = false; }
+    });
   }
 
   // ---------- calendario ----------
@@ -195,6 +267,8 @@
     if (previewDate) return;
     const s = seenSet(); s.add(day);
     store.set(SEEN_KEY, JSON.stringify([...s]));
+    // Per il promemoria delle 20: oggi l'ha già aperta.
+    if (creds.code) api({ action: "opened", day, code: creds.code }).catch(() => {});
   }
 
   function render() {

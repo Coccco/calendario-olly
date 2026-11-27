@@ -180,10 +180,11 @@
       nr.type = "button";
       nr.className = "lrow nrow";
       nr.innerHTML = `<span class="ln">${d}</span><span class="lt"><small>ore 8</small><span class="m"></span><small>ore 20</small><span class="e"></span></span>`;
-      nr.querySelector(".m").textContent = r?.notify_morning || "Messaggio predefinito";
-      nr.querySelector(".e").textContent = r?.notify_evening || "Messaggio predefinito";
-      if (!r?.notify_morning) nr.querySelector(".m").classList.add("def");
-      if (!r?.notify_evening) nr.querySelector(".e").classList.add("def");
+      for (const [cls, val] of [[".m", r?.notify_morning], [".e", r?.notify_evening]]) {
+        const n = nr.querySelector(cls);
+        n.textContent = val === "-" ? "Spenta" : val || "Messaggio predefinito";
+        if (!val || val === "-") n.classList.add("def");
+      }
       nr.addEventListener("click", () => openEditor(d));
       nl.appendChild(nr);
     }
@@ -223,33 +224,67 @@
 
   // ---------- editor ----------
   const dlg = $("editor");
+  const DEF_LABEL = "Un regalo per te";
+  const OFF = "-"; // notifica spenta per quel giorno
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  // confronto stabile (jsonb riordina le chiavi)
+  const stable = (o) => JSON.stringify(o, (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort()) : v));
+  const snapshot = () => stable({ ...current, updated_at: null, created_at: null });
+  let original = null, saved = "", autoT = null, pane = "msg", thumbs = new Map();
+
+  function setAuto(text, cls = "") { const a = $("ed-auto"); a.textContent = text; a.className = "ed-auto " + cls; }
+
+  function setNotify(k, val) {
+    const off = val === OFF;
+    $("f-on-" + k).checked = !off;
+    $("f-notify-" + k).value = off ? "" : val || "";
+    $("f-notify-" + k).disabled = off;
+  }
+
+  function fillForm(r) {
+    $("f-title").value = r.title || "";
+    $("f-message").value = r.message || "";
+    $("f-link").value = r.link_url || "";
+    $("f-link-label").value = r.link_label || "";
+    const v = (r.media || []).find((m) => m.type === "voucher");
+    $("f-voucher").value = v?.caption || "";
+    $("f-voucher-label").value = v && typeof v.label === "string" ? v.label : DEF_LABEL;
+    setNotify("m", r.notify_morning);
+    setNotify("e", r.notify_evening);
+    $("f-count").textContent = `${$("f-message").value.length} / 1000`;
+  }
 
   function openEditor(day) {
+    clearTimeout(autoT);
     current = structuredClone(days.get(day) || {
       day, title: "", message: "", link_url: "", link_label: "", media: [],
     });
+    current.media = current.media || [];
+    original = structuredClone(current);
     $("ed-title").textContent = `${day} dicembre${day === 24 ? " · il gran giorno" : ""}`;
     const badge = $("ed-badge");
     if (day <= visibleUpTo()) {
       badge.textContent = `⚠️ ${her()} può già aprire questa casella: le modifiche le vede subito.`;
       badge.className = "badge-line warn";
     } else {
-      badge.textContent = `${her()} la potrà aprire dal ${day} dicembre. Puoi cambiarla quando vuoi fino ad allora.`;
+      badge.textContent = `Crea la sorpresa del ${day} dicembre di ${her()}. Puoi cambiarla quando vuoi.`;
       badge.className = "badge-line";
     }
-    $("f-title").value = current.title;
-    $("f-message").value = current.message;
-    $("f-link").value = current.link_url;
-    $("f-link-label").value = current.link_label;
-    $("f-voucher").value = (current.media.find((m) => m.type === "voucher") || {}).caption || "";
-    $("f-notify-m").value = current.notify_morning || "";
-    $("f-notify-e").value = current.notify_evening || "";
+    fillForm(current);
     $("f-notify-m").placeholder = `Buongiorno${cal.her_name ? " " + cal.her_name : ""}! La casella del ${day} dicembre è pronta da aprire 🎁`;
     $("f-notify-e").placeholder = `La sorpresa del ${day} dicembre ti sta ancora aspettando 👀`;
+    $("ed-prev").disabled = day <= 1;
+    $("ed-next").disabled = day >= 24;
     $("upload-status").textContent = "";
     $("save-error").textContent = "";
-    renderMedia();
-    dlg.showModal();
+    readForm();
+    saved = snapshot();
+    setAuto("Salvataggio automatico ✓");
+    thumbs = new Map();
+    showPane("msg", false);
+    renderMedia(true);
+    if (!dlg.open) dlg.showModal();
+    dlg.scrollTop = 0;
   }
 
   function readForm() {
@@ -257,21 +292,71 @@
     current.message = $("f-message").value.trim();
     current.link_url = $("f-link").value.trim();
     current.link_label = $("f-link-label").value.trim();
-    current.notify_morning = $("f-notify-m").value.trim();
-    current.notify_evening = $("f-notify-e").value.trim();
+    current.notify_morning = $("f-on-m").checked ? $("f-notify-m").value.trim() : OFF;
+    current.notify_evening = $("f-on-e").checked ? $("f-notify-e").value.trim() : OFF;
     const v = $("f-voucher").value.trim();
     current.media = current.media.filter((m) => m.type !== "voucher");
-    if (v) current.media.push({ type: "voucher", caption: v, name: "buono" });
+    if (v) current.media.push({ type: "voucher", caption: v, label: $("f-voucher-label").value.trim(), name: "buono" });
   }
 
   async function saveRow() {
     readForm();
     const row = { ...current, calendar: cal.slug, updated_at: new Date().toISOString() };
+    delete row.created_at;
     const { data, error } = await sb.from("days").upsert(row, { onConflict: "calendar,day" }).select().single();
     if (error) throw error;
     days.set(data.day, data);
     current = structuredClone(data);
+    saved = snapshot();
     renderDays();
+  }
+
+  // salvataggio automatico: 1,2 secondi dopo l'ultima modifica
+  function onChange() {
+    readForm();
+    renderPreview(false);
+    updateDots();
+    $("f-count").textContent = `${$("f-message").value.length} / 1000`;
+    clearTimeout(autoT);
+    if (snapshot() === saved) return setAuto("Salvataggio automatico ✓");
+    setAuto("Modifiche non salvate…", "wait");
+    autoT = setTimeout(autoSave, 1200);
+  }
+  async function autoSave() {
+    clearTimeout(autoT);
+    readForm();
+    if (snapshot() === saved) return true;
+    setAuto("Salvo…", "wait");
+    try {
+      await saveRow();
+      setAuto("Salvato automaticamente ✓");
+      $("save-error").textContent = "";
+      return true;
+    } catch (err) {
+      setAuto("Non salvato", "err");
+      $("save-error").textContent = "Salvataggio non riuscito: " + err.message;
+      return false;
+    }
+  }
+  $("day-form").addEventListener("input", (e) => { if (e.target.id !== "file") onChange(); });
+  $("day-form").addEventListener("change", (e) => { if (e.target.id !== "file") onChange(); });
+  for (const k of ["m", "e"]) {
+    $("f-on-" + k).addEventListener("change", (e) => {
+      const f = $("f-notify-" + k);
+      f.disabled = !e.target.checked;
+      if (e.target.checked) f.focus();
+    });
+  }
+  $("label-chips").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-v]");
+    if (!b) return;
+    $("f-voucher-label").value = b.dataset.v;
+    onChange();
+    renderPreview(true);
+  });
+
+  async function closeEditor() {
+    if (await autoSave()) dlg.close();
   }
 
   $("day-form").addEventListener("submit", async (e) => {
@@ -279,6 +364,7 @@
     const btn = $("save");
     btn.disabled = true;
     try {
+      clearTimeout(autoT);
       await saveRow();
       dlg.close();
       toast(`${current.day} dicembre salvato 💛`);
@@ -289,10 +375,26 @@
     }
   });
 
-  $("ed-close").addEventListener("click", () => dlg.close());
+  $("ed-close").addEventListener("click", closeEditor);
+  dlg.addEventListener("cancel", (e) => { e.preventDefault(); closeEditor(); });
+  $("ed-prev").addEventListener("click", async () => { if (current.day > 1 && (await autoSave())) openEditor(current.day - 1); });
+  $("ed-next").addEventListener("click", async () => { if (current.day < 24 && (await autoSave())) openEditor(current.day + 1); });
+
+  // Annulla: rimette i testi com'erano all'apertura (i file caricati o tolti restano come sono)
+  $("ed-cancel").addEventListener("click", async () => {
+    clearTimeout(autoT);
+    fillForm(original);
+    readForm();
+    if (snapshot() !== saved) {
+      try { await saveRow(); } catch (err) { $("save-error").textContent = "Non riesco ad annullare: " + err.message; return; }
+      toast("Modifiche annullate");
+    }
+    dlg.close();
+  });
 
   $("clear-day").addEventListener("click", async () => {
     if (!confirm(`Svuotare il ${current.day} dicembre? Testo e file verranno cancellati.`)) return;
+    clearTimeout(autoT);
     const paths = current.media.map((m) => m.path).filter(Boolean);
     if (paths.length) await sb.storage.from("surprises").remove(paths);
     const { error } = await sb.from("days").delete().eq("calendar", cal.slug).eq("day", current.day);
@@ -302,6 +404,92 @@
     dlg.close();
     toast("Giorno svuotato");
   });
+
+  // ---------- schede del contenuto ----------
+  const ATTACH = {
+    image: ["image/*", "Aggiungi foto", "Le foto diventano polaroid. Sotto ognuna puoi scrivere una didascalia.", "Ancora nessuna foto."],
+    video: ["video/*", "Aggiungi un video", "Lei preme play per guardarlo. Meglio video corti (max 50 MB).", "Ancora nessun video."],
+    audio: ["audio/*", "Carica un audio", "Il primo audio parte da solo quando lei apre la casella (se non c'è, suonano dei campanellini). Meglio vocali brevi, fino a 2 minuti.", "Ancora nessun audio."],
+  };
+  function showPane(name, play = true) {
+    pane = name;
+    document.querySelectorAll(".ed-tab").forEach((t) => {
+      t.classList.toggle("on", t.dataset.pane === name);
+      t.setAttribute("aria-selected", t.dataset.pane === name);
+    });
+    document.querySelectorAll(".pane").forEach((p) => (p.hidden = !p.dataset.pane.split(" ").includes(name)));
+    const a = ATTACH[name];
+    if (a) {
+      $("file").accept = a[0];
+      $("upload-text").textContent = a[1];
+      $("attach-hint").textContent = a[2];
+      $("rec-box").hidden = name !== "audio";
+      drawMedia();
+    }
+    updateDots();
+    if (play && name === "voucher") renderPreview(true);
+  }
+  document.querySelectorAll(".ed-tab").forEach((t) => t.addEventListener("click", () => showPane(t.dataset.pane)));
+
+  function updateDots() {
+    const has = {
+      msg: !!($("f-title").value.trim() || $("f-message").value.trim()),
+      link: !!$("f-link").value.trim(),
+      voucher: !!$("f-voucher").value.trim(),
+    };
+    for (const t of ["image", "video", "audio"]) has[t] = current.media.some((m) => m.type === t);
+    document.querySelectorAll(".ed-tab").forEach((t) => t.classList.toggle("has", !!has[t.dataset.pane]));
+  }
+
+  // ---------- anteprima dal vivo ----------
+  function voucherNode(f, day, play) {
+    const wrap = el("div", "voucher" + (play ? " play" : ""));
+    wrap.style.setProperty("--v-delay", ".1s");
+    const ticket = el("div", "ticket"), paper = el("div", "t-paper"), main = el("div", "t-main");
+    const label = typeof f.label === "string" ? f.label : DEF_LABEL;
+    if (label.trim()) main.append(el("span", "v-small", label.trim()));
+    main.append(el("strong", "", f.caption || "una sorpresa"), el("i", "", "♡"));
+    const stub = el("div", "t-stub");
+    stub.append(el("span", "", "N°"), el("b", "", String(day).padStart(2, "0")), el("em", "", "♥"));
+    paper.append(main, stub);
+    ticket.append(paper);
+    wrap.append(el("span", "env-back"), el("span", "env-flap"), ticket, el("span", "env-front"), el("span", "twine"));
+    return wrap;
+  }
+
+  function renderPreview(play) {
+    const pv = $("pv");
+    const d = current, media = d.media || [];
+    pv.textContent = "";
+    const sheet = el("div", "pv-sheet");
+    sheet.append(el("p", "pv-date", `${d.day} dicembre`));
+    if (!isFilled(d)) {
+      sheet.append(el("p", "pv-empty", "Ancora vuota: inizia da un titolo, una foto o un vocale ✨"));
+      return pv.append(sheet);
+    }
+    const h = el("h4", "pv-title", d.title || (d.day === 24 ? "Buon Natale!" : "La sorpresa di oggi"));
+    h.append(el("span", "", " ♡"));
+    sheet.append(h);
+    if (window.DECOR) { const bw = el("span", "pv-bow"); bw.innerHTML = DECOR.bow(); sheet.append(bw); }
+    const v = media.find((m) => m.type === "voucher");
+    if (v) sheet.append(voucherNode(v, d.day, play));
+    media.filter((m) => m.type === "image").forEach((m, i) => {
+      const fig = el("figure", "pv-pol");
+      fig.style.setProperty("--tilt", (i % 2 ? 2 : -2) + "deg");
+      const ph = el("span", "ph");
+      if (thumbs.get(m.path)) ph.style.backgroundImage = `url("${thumbs.get(m.path)}")`;
+      fig.append(ph, el("figcaption", "", m.caption || "♡"));
+      sheet.append(fig);
+    });
+    if (d.message) sheet.append(el("p", "pv-msg", d.message));
+    const extra = [];
+    const aud = media.filter((m) => m.type === "audio").length, vid = media.filter((m) => m.type === "video").length;
+    if (aud) extra.push(`🎧 ${aud === 1 ? "vocale" : aud + " audio"} (parte da solo)`);
+    if (vid) extra.push(`🎬 ${vid === 1 ? "video" : vid + " video"}`);
+    if (extra.length) sheet.append(el("p", "pv-extra", extra.join("  ·  ")));
+    if (d.link_url) sheet.append(el("span", "pv-link", d.link_label || "Apri il link ✨"));
+    pv.append(sheet);
+  }
 
   // ---------- file ----------
   function kindOf(file) {
@@ -335,7 +523,7 @@
       if (error) { status.textContent = `Errore con "${file.name}": ${error.message}`; return false; }
       current.media.push({ path, type, name: file.name });
       try { await saveRow(); } catch (err) { status.textContent = "File caricato ma non salvato: " + err.message; return false; }
-      renderMedia();
+      renderMedia(); updateDots();
       status.textContent = `Caricato: ${file.name} ✓`;
       return true;
     }
@@ -366,7 +554,7 @@
 
   $("rec-start").addEventListener("click", async () => {
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-      return recUI("idle", "Questo browser non registra: usa \"Aggiungi file\" con un vocale fatto dal telefono.");
+      return recUI("idle", "Questo browser non registra: usa \"Carica un audio\" con un vocale fatto dal telefono.");
     }
     recUI("idle", "Il telefono ti chiederà di usare il microfono: tocca Consenti.");
     try {
@@ -412,17 +600,27 @@
   });
   dlg.addEventListener("close", recReset);
 
-  async function renderMedia() {
+  async function renderMedia(play = false) {
+    const day = current.day;
+    const need = current.media.filter((m) => m.type === "image" && m.path && !thumbs.has(m.path)).map((m) => m.path);
+    drawMedia();
+    renderPreview(play);
+    if (!need.length) return;
+    const { data } = await sb.storage.from("surprises").createSignedUrls(need, 600);
+    if (current.day !== day) return;
+    for (const s of data || []) if (s.signedUrl) thumbs.set(s.path, s.signedUrl);
+    drawMedia();
+    renderPreview(false);
+  }
+
+  function drawMedia() {
     const list = $("media-list");
     list.textContent = "";
-    const imgs = current.media.filter((m) => m.type === "image" && m.path).map((m) => m.path);
-    const thumbs = new Map();
-    if (imgs.length) {
-      const { data } = await sb.storage.from("surprises").createSignedUrls(imgs, 600);
-      for (const s of data || []) thumbs.set(s.path, s.signedUrl);
-    }
-    current.media.forEach((m, idx) => {
-      if (m.type === "voucher") return;
+    const show = ATTACH[pane] ? pane : null;
+    let n = 0;
+    current.media.forEach((m) => {
+      if (m.type === "voucher" || m.type !== show) return;
+      n++;
       const li = document.createElement("li");
       const th = document.createElement("span");
       th.className = "thumb";
@@ -446,13 +644,16 @@
       del.addEventListener("click", async () => {
         del.disabled = true;
         await sb.storage.from("surprises").remove([m.path]);
-        current.media.splice(idx, 1);
+        current.media = current.media.filter((x) => x !== m);
         try { await saveRow(); } catch {}
         renderMedia();
+        updateDots();
       });
       li.append(th, name, del);
       list.append(li);
     });
+    $("attach-none").hidden = n > 0 || !show;
+    if (show) $("attach-none").textContent = ATTACH[show][3];
   }
 
   // ---------- anteprima ----------

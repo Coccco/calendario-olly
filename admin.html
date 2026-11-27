@@ -14,8 +14,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261128f">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css?v=20261128g">
+  <link rel="stylesheet" href="voucher.css?v=20261128g">
 </head>
 <body>
   <!-- Login -->
@@ -165,58 +166,113 @@
   <!-- Modifica di un giorno -->
   <dialog id="editor" class="editor">
     <form id="day-form" method="dialog">
+      <div class="ed-bar">
+        <button type="button" class="ed-back" id="ed-close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span>Torna al calendario</span></button>
+        <span class="ed-auto" id="ed-auto">Salvataggio automatico ✓</span>
+        <span class="ed-arrows">
+          <button type="button" id="ed-prev" aria-label="Giorno prima"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <button type="button" id="ed-next" aria-label="Giorno dopo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        </span>
+      </div>
+
       <header class="ed-head">
-        <h2 id="ed-title">1 dicembre</h2>
-        <button type="button" class="ghost" id="ed-close" aria-label="Chiudi">×</button>
+        <span class="ed-cal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v5M16 3v5"/></svg></span>
+        <div>
+          <h2 id="ed-title">1 dicembre</h2>
+          <p class="badge-line" id="ed-badge"></p>
+        </div>
       </header>
-      <p class="badge-line" id="ed-badge"></p>
 
-      <label>Titolo <input id="f-title" maxlength="120" placeholder="Es. Il nostro primo appuntamento"></label>
-      <label>Messaggio <textarea id="f-message" rows="6" placeholder="Scrivile qualcosa…"></textarea></label>
-      <div class="two">
-        <label>Link <input id="f-link" type="url" placeholder="https://…"></label>
-        <label>Testo del bottone <input id="f-link-label" maxlength="60" placeholder="Ascolta la playlist 🎶"></label>
-      </div>
-      <p class="muted small" style="margin:-8px 0 14px">Facoltativo. Incolla un link (una playlist Spotify, un video YouTube, un posto su Maps…): nella sorpresa lei vede un bottone con il testo che scrivi, e toccandolo si apre il link.</p>
-
-      <label>Buono (facoltativo) <input id="f-voucher" maxlength="60" placeholder="Es. una serata insieme"></label>
-      <p class="muted small" style="margin:-8px 0 14px">Facoltativo, per i regali da riscattare dal vivo. Scrivi solo cosa vale (es. "una cena da me"): lei vede un biglietto "Buono per una cena da me" che esce da una busta rossa.</p>
-
-      <div class="two">
-        <label>Notifica delle 8 <input id="f-notify-m" maxlength="140"></label>
-        <label>Promemoria delle 20 <input id="f-notify-e" maxlength="140"></label>
-      </div>
-      <p class="muted small" style="margin:-8px 0 14px">Facoltative: se le lasci vuote parte il messaggio che vedi in grigio. Il promemoria delle 20 arriva solo se non ha ancora aperto la casella.</p>
-
-      <div class="media-block">
-        <strong>Foto, video e audio</strong>
-        <ul class="media-list" id="media-list"></ul>
-        <div class="rec">
-          <button type="button" class="primary rec-btn" id="rec-start">🎤 Registra un vocale</button>
-          <div class="rec-live" id="rec-live" hidden>
-            <span class="rec-dot"></span><span id="rec-time">0:00 / 2:00</span>
-            <button type="button" class="primary" id="rec-stop">■ Stop</button>
+      <div class="ed-grid">
+        <section class="ed-card ed-main">
+          <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13M12 7c-2-4-7-4-6-1 .5 1.5 4 1 6 1 2 0 5.5.5 6-1 1-3-4-3-6 1"/></svg> Contenuto della sorpresa</h3>
+          <div class="ed-tabs" role="tablist">
+            <button type="button" class="ed-tab" data-pane="msg" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 11h16M4 16h10"/></svg><span>Messaggio</span><i class="dot"></i></button>
+            <button type="button" class="ed-tab" data-pane="image" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01"/></svg><span>Foto</span><i class="dot"></i></button>
+            <button type="button" class="ed-tab" data-pane="video" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h13v12H3zM16 10l5-3v10l-5-3"/></svg><span>Video</span><i class="dot"></i></button>
+            <button type="button" class="ed-tab" data-pane="audio" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Audio</span><i class="dot"></i></button>
+            <button type="button" class="ed-tab" data-pane="link" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span>Link</span><i class="dot"></i></button>
+            <button type="button" class="ed-tab" data-pane="voucher" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10"/></svg><span>Buono</span><i class="dot"></i></button>
           </div>
-          <div class="rec-done" id="rec-done" hidden>
-            <audio id="rec-play" controls playsinline></audio>
-            <div class="row">
-              <button type="button" class="ghost" id="rec-redo">↺ Rifai</button>
-              <button type="button" class="primary" id="rec-use">✓ Usa questo</button>
+
+          <div class="pane" data-pane="msg">
+            <label>Titolo <input id="f-title" maxlength="120" placeholder="Es. Il nostro primo appuntamento"></label>
+            <label>Messaggio
+              <span class="ta-wrap"><textarea id="f-message" rows="6" maxlength="1000" placeholder="Scrivile qualcosa…"></textarea><small class="count" id="f-count">0 / 1000</small></span>
+            </label>
+          </div>
+
+          <div class="pane attach" data-pane="image video audio">
+            <p class="pane-hint" id="attach-hint"></p>
+            <ul class="media-list" id="media-list"></ul>
+            <p class="none muted small" id="attach-none" hidden></p>
+            <div class="rec" id="rec-box">
+              <button type="button" class="primary rec-btn" id="rec-start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/></svg> Registra un vocale</button>
+              <div class="rec-live" id="rec-live" hidden>
+                <span class="rec-dot"></span><span id="rec-time">0:00 / 2:00</span>
+                <button type="button" class="primary" id="rec-stop">■ Stop</button>
+              </div>
+              <div class="rec-done" id="rec-done" hidden>
+                <audio id="rec-play" controls playsinline></audio>
+                <div class="row">
+                  <button type="button" class="ghost" id="rec-redo">↺ Rifai</button>
+                  <button type="button" class="primary" id="rec-use">✓ Usa questo</button>
+                </div>
+              </div>
+              <p class="muted small" id="rec-msg"></p>
+            </div>
+            <label class="upload">
+              <input type="file" id="file" accept="image/*" multiple>
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/></svg> <b id="upload-text">Aggiungi foto</b><small>Tocca per scegliere (max 50 MB l'uno)</small></span>
+            </label>
+            <p class="muted small" id="upload-status"></p>
+          </div>
+
+          <div class="pane" data-pane="link">
+            <p class="pane-hint">Una playlist, un video, un posto su Maps… Lei vede un bottone con il testo che scrivi: toccandolo si apre il link.</p>
+            <label>Link <input id="f-link" type="url" placeholder="https://…"></label>
+            <label>Testo del bottone <input id="f-link-label" maxlength="60" placeholder="Ascolta la playlist 🎶"></label>
+          </div>
+
+          <div class="pane" data-pane="voucher">
+            <p class="pane-hint">Per i regali da riscattare dal vivo. Lei vede un biglietto che esce da una busta.</p>
+            <label>Cosa vale <input id="f-voucher" maxlength="60" placeholder="Es. una cena da me"></label>
+            <label>Scritta in alto <input id="f-voucher-label" maxlength="30" placeholder="Nessuna scritta"></label>
+            <div class="chips" id="label-chips">
+              <button type="button" data-v="Un regalo per te">Un regalo per te</button>
+              <button type="button" data-v="Vale per">Vale per</button>
+              <button type="button" data-v="Solo per te">Solo per te</button>
+              <button type="button" data-v="">Nessuna</button>
             </div>
           </div>
-          <p class="muted small" id="rec-msg"></p>
-        </div>
-        <label class="upload">
-          <input type="file" id="file" accept="image/*,video/*,audio/*" multiple>
-          <span>+ Aggiungi file (max 50 MB l'uno)</span>
-        </label>
-        <p class="muted small">🔊 Il primo audio del giorno (es. un tuo vocale) parte da solo quando lei apre la casella. Se non ce n'è, suonano dei campanellini. Meglio audio brevi: fino a 2 minuti e 5 MB.</p>
-        <p class="muted small" id="upload-status"></p>
+        </section>
+
+        <aside class="ed-side">
+          <section class="ed-card ed-preview">
+            <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg> Anteprima della sorpresa</h3>
+            <div class="pv" id="pv"></div>
+          </section>
+
+          <section class="ed-card ed-notify">
+            <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg> Notifiche del giorno</h3>
+            <div class="nt">
+              <div class="nt-top"><strong>Notifica delle 8:00</strong><label class="switch"><input type="checkbox" id="f-on-m" checked><span></span></label></div>
+              <input id="f-notify-m" maxlength="140">
+            </div>
+            <div class="nt">
+              <div class="nt-top"><strong>Promemoria delle 20:00</strong><label class="switch"><input type="checkbox" id="f-on-e" checked><span></span></label></div>
+              <input id="f-notify-e" maxlength="140">
+            </div>
+            <p class="muted small">Se lasci il testo vuoto parte quello in grigio. Il promemoria arriva solo se non ha ancora aperto la casella.</p>
+          </section>
+        </aside>
       </div>
 
       <footer class="ed-foot">
-        <button type="button" class="ghost danger" id="clear-day">Svuota giorno</button>
-        <button type="submit" class="primary" id="save">Salva</button>
+        <button type="button" class="ghost danger" id="clear-day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Svuota giorno</span></button>
+        <span class="sp"></span>
+        <button type="button" class="ghost" id="ed-cancel">Annulla</button>
+        <button type="submit" class="primary" id="save">✓ Salva modifiche</button>
       </footer>
       <p class="error" id="save-error" role="alert"></p>
     </form>
@@ -225,8 +281,8 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="config.js?v=20261128f"></script>
-  <script src="decor.js?v=20261128f"></script>
-  <script src="admin.js?v=20261128f"></script>
+  <script src="config.js?v=20261128g"></script>
+  <script src="decor.js?v=20261128g"></script>
+  <script src="admin.js?v=20261128g"></script>
 </body>
 </html>

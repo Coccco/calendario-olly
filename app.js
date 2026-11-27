@@ -526,7 +526,7 @@
     } else {
       title.textContent = d.title || (day === 24 ? "Buon Natale!" : "La sorpresa di oggi");
       title.append(el("span", "t-heart", " ♡"));
-      if (voucher) body.append(voucherCard(voucher.caption));
+      if (voucher) body.append(voucherCard(voucher, day));
       const photos = media.filter((f) => f.url && f.type === "image");
       photos.forEach((f, i) => {
         const fig = el("figure", "polaroid");
@@ -576,11 +576,20 @@
     dlg.querySelector(".sheet").scrollTop = 0;
   }
 
-  function voucherCard(text) {
-    const wrap = el("div", "voucher");
+  // Buono: busta che si apre e biglietto con intestazione modificabile (vuota = nessuna intestazione)
+  function voucherCard(f, day) {
+    const wrap = el("div", "voucher play");
     const ticket = el("div", "ticket");
-    ticket.append(el("span", "v-small", "Buono per"), el("strong", "", text || "una sorpresa"), el("i", "", "♡"));
-    wrap.append(el("span", "envelope"), ticket, el("span", "twine"));
+    const paper = el("div", "t-paper");
+    const main = el("div", "t-main");
+    const label = typeof f.label === "string" ? f.label : "Un regalo per te";
+    if (label.trim()) main.append(el("span", "v-small", label.trim()));
+    main.append(el("strong", "", f.caption || "una sorpresa"), el("i", "", "♡"));
+    const stub = el("div", "t-stub");
+    stub.append(el("span", "", "N°"), el("b", "", String(day).padStart(2, "0")), el("em", "", "♥"));
+    paper.append(main, stub);
+    ticket.append(paper);
+    wrap.append(el("span", "env-back"), el("span", "env-flap"), ticket, el("span", "env-front"), el("span", "twine"));
     return wrap;
   }
 

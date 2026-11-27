@@ -117,3 +117,14 @@ button:disabled { opacity: .55; cursor: wait; }
 .settings .row input[readonly] { color: inherit; opacity: .8; }
 .center { text-align: center; margin-top: 14px; }
 .linkish { background: none; border: 0; padding: 4px; color: var(--red); text-decoration: underline; font: inherit; cursor: pointer; }
+
+/* Registratore vocale */
+.rec { margin: 10px 0 12px; }
+.rec-btn { width: 100%; }
+.rec-live { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 12px; font-variant-numeric: tabular-nums; }
+.rec-live #rec-stop { margin-left: auto; }
+.rec-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--red); animation: recblink 1s infinite; }
+@keyframes recblink { 50% { opacity: .25; } }
+.rec-done audio { width: 100%; margin-bottom: 8px; }
+.rec-done .row button { flex: 1; }
+#rec-msg:empty { display: none; }

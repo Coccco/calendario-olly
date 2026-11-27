@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#245a3c"/><stop offset="1" stop-color="#0d2117"/>
+    </radialGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fdf7ec"/><stop offset="1" stop-color="#e3d2b3"/>
+    </linearGradient>
+    <linearGradient id="rib" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9c1820"/><stop offset=".5" stop-color="#d6353c"/><stop offset="1" stop-color="#9c1820"/>
+    </linearGradient>
+    <linearGradient id="bow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e3454c"/><stop offset="1" stop-color="#8d121a"/>
+    </linearGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#ffe3a0" stop-opacity=".55"/><stop offset="1" stop-color="#ffe3a0" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="290" r="230" fill="url(#glow)"/>
+  <g fill="#f1d9a4">
+    <circle cx="78" cy="92" r="4"/><circle cx="430" cy="70" r="3"/><circle cx="455" cy="190" r="4"/>
+    <circle cx="60" cy="230" r="3"/><circle cx="120" cy="40" r="2.5"/><circle cx="380" cy="120" r="2.5"/>
+  </g>
+  <!-- scatola -->
+  <rect x="116" y="238" width="280" height="200" rx="16" fill="url(#box)"/>
+  <rect x="238" y="238" width="36" height="200" fill="url(#rib)"/>
+  <!-- coperchio -->
+  <rect x="98" y="192" width="316" height="62" rx="14" fill="url(#box)"/>
+  <rect x="98" y="240" width="316" height="14" fill="#000" opacity=".08"/>
+  <rect x="236" y="192" width="40" height="62" fill="url(#rib)"/>
+  <!-- fiocco -->
+  <path fill="#7a0f16" d="M246 196 L196 268 L216 262 L222 282 L262 202Z"/>
+  <path fill="#7a0f16" d="M266 196 L316 268 L296 262 L290 282 L250 202Z"/>
+  <path fill="url(#bow)" d="M256 194 C224 130 150 108 138 146 C126 186 196 206 256 194Z"/>
+  <path fill="url(#bow)" d="M256 194 C288 130 362 108 374 146 C386 186 316 206 256 194Z"/>
+  <path fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round" d="M150 140 C176 124 214 140 240 176 M362 140 C336 124 298 140 272 176"/>
+  <ellipse cx="256" cy="194" rx="22" ry="19" fill="#a3161e"/>
+  <ellipse cx="250" cy="188" rx="8" ry="5" fill="#fff" opacity=".3"/>
+  <!-- agrifoglio -->
+  <g transform="translate(330 300) scale(1.3)">
+    <path fill="#2f6b45" d="M0 10 C-14 -6 -30 -4 -40 4 C-32 6 -32 14 -36 18 C-24 22 -10 20 0 10Z"/>
+    <path fill="#245639" d="M0 10 C14 -6 30 -4 40 4 C32 6 32 14 36 18 C24 22 10 20 0 10Z"/>
+    <circle cx="-5" cy="14" r="6" fill="#c0262d"/><circle cx="6" cy="14" r="6" fill="#c0262d"/><circle cx="0" cy="5" r="6" fill="#d23a3f"/>
+  </g>
+</svg>

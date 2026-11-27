@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261128c">
+  <link rel="stylesheet" href="admin.css?v=20261128d">
 </head>
 <body>
   <!-- Login -->
@@ -108,9 +108,10 @@
         <label>Link <input id="f-link" type="url" placeholder="https://…"></label>
         <label>Testo del bottone <input id="f-link-label" maxlength="60" placeholder="Ascolta la playlist 🎶"></label>
       </div>
+      <p class="muted small" style="margin:-8px 0 14px">Facoltativo. Incolla un link (una playlist Spotify, un video YouTube, un posto su Maps…): nella sorpresa lei vede un bottone con il testo che scrivi, e toccandolo si apre il link.</p>
 
       <label>Buono (facoltativo) <input id="f-voucher" maxlength="60" placeholder="Es. una serata insieme"></label>
-      <p class="muted small" style="margin:-8px 0 14px">Se lo scrivi, la sorpresa mostra un biglietto "Buono per…" su una busta rossa.</p>
+      <p class="muted small" style="margin:-8px 0 14px">Facoltativo, per i regali da riscattare dal vivo. Scrivi solo cosa vale (es. "una cena da me"): lei vede un biglietto "Buono per una cena da me" che esce da una busta rossa.</p>
 
       <div class="two">
         <label>Notifica delle 8 <input id="f-notify-m" maxlength="140"></label>
@@ -155,7 +156,7 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="config.js?v=20261128c"></script>
-  <script src="admin.js?v=20261128c"></script>
+  <script src="config.js?v=20261128d"></script>
+  <script src="admin.js?v=20261128d"></script>
 </body>
 </html>

@@ -461,3 +461,12 @@ body::before {
   box-shadow: 0 2px 4px rgba(0, 0, 0, .3);
 }
 .intro-text { text-wrap: balance; }
+
+/* Neve sopra la sorpresa aperta */
+.snowfall {
+  position: fixed; inset: 0; width: 100vw; height: 100dvh;
+  margin: 0; padding: 0; border: 0; background: transparent;
+  pointer-events: none; z-index: 95;
+}
+.snowfall:popover-open { display: block; }
+.snowfall[popover]:not(:popover-open) { display: none; }

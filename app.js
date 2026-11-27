@@ -337,12 +337,71 @@
     const dlg = $("surprise");
     dlg.showModal();
     dlg.scrollTop = 0;
+    startSnow();
   }
 
   const dlg = $("surprise");
   dlg.querySelector(".close").addEventListener("click", () => dlg.close());
   dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
-  dlg.addEventListener("close", () => dlg.querySelectorAll("video, audio").forEach((m) => m.pause()));
+  dlg.addEventListener("close", () => {
+    dlg.querySelectorAll("video, audio").forEach((m) => m.pause());
+    stopSnow();
+  });
+
+  // Neve che cade sopra la sorpresa appena si apre
+  const snowLayer = el("canvas", "snowfall");
+  snowLayer.setAttribute("aria-hidden", "true");
+  if ("showPopover" in snowLayer) snowLayer.setAttribute("popover", "manual");
+  document.body.append(snowLayer);
+  let snowRaf = 0;
+  function startSnow() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    stopSnow();
+    if (snowLayer.showPopover) { try { snowLayer.showPopover(); } catch {} }
+    else $("surprise").append(snowLayer);
+    const ctx = snowLayer.getContext("2d");
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const W = innerWidth, H = innerHeight;
+    snowLayer.width = W * dpr; snowLayer.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = W < 500 ? 55 : 90;
+    const flakes = Array.from({ length: n }, (_, i) => ({
+      x: Math.random() * W,
+      y: i < n * .5 ? Math.random() * H * .8 - H * .1 : -Math.random() * H, // metà già in volo, metà in arrivo
+      r: 1.2 + Math.random() * 3.2,
+      v: 50 + Math.random() * 70,
+      w: Math.random() * Math.PI * 2,
+      s: .6 + Math.random() * 1.2,
+    }));
+    const t0 = performance.now();
+    let last = t0;
+    const frame = (now) => {
+      const dt = Math.min((now - last) / 1000, .05); last = now;
+      const fade = Math.min((now - t0) / 600, 1);
+      ctx.clearRect(0, 0, W, H);
+      for (const f of flakes) {
+        f.y += f.v * dt;
+        f.w += f.s * dt;
+        f.x += Math.sin(f.w) * 18 * dt;
+        if (f.y > H + 6) { f.y = -6; f.x = Math.random() * W; }
+        ctx.globalAlpha = fade * (.45 + f.r / 8);
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fillStyle = "#fbfdff";
+        ctx.fill();
+        ctx.lineWidth = .8;
+        ctx.strokeStyle = "rgba(110,135,160,.35)"; // bordino per vederla anche sul foglio crema
+        ctx.stroke();
+      }
+      snowRaf = requestAnimationFrame(frame);
+    };
+    snowRaf = requestAnimationFrame(frame);
+  }
+  function stopSnow() {
+    cancelAnimationFrame(snowRaf);
+    if (snowLayer.hidePopover) { try { snowLayer.hidePopover(); } catch {} }
+    else snowLayer.remove();
+  }
 
   // Se la pagina resta aperta (es. passa la mezzanotte), aggiorna al rientro
   document.addEventListener("visibilitychange", () => {

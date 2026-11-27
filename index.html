@@ -52,12 +52,13 @@
       Anteprima admin del <input type="date" id="preview-date" min="2026-11-25" max="2026-12-26">
     </div>
     <header class="cal-head">
-      <p class="kicker">Per</p>
+      <p class="per">Per</p>
       <h1 class="name"><span id="her-name">Olly</span><span class="heart" data-heart></span></h1>
       <div class="divider"><span></span><i data-bow></i><span></span></div>
+      <p class="subtitle">Il tuo calendario dell'Avvento <span>♡</span></p>
       <p class="intro-text" id="intro-text"></p>
       <p class="signature" id="signature"></p>
-      <p class="status" id="status"></p>
+      <p class="status"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span id="status"></span></p>
     </header>
     <section class="grid" id="grid" aria-label="Caselle dal 1 al 24 dicembre"></section>
     <div class="ground" aria-hidden="true"></div>
@@ -67,11 +68,18 @@
   <dialog id="surprise" class="surprise">
     <article class="sheet">
       <button class="close" type="button" aria-label="Chiudi">×</button>
-      <p class="kicker" id="s-date"></p>
+      <span class="sprig-deco" data-holly></span>
+      <p class="s-date"><span id="s-date"></span></p>
       <h2 id="s-title"></h2>
       <div class="sheet-bow" data-bow></div>
       <div id="s-body"></div>
+      <span class="seal" aria-hidden="true">♥</span>
     </article>
+    <nav class="day-nav" aria-label="Altri giorni">
+      <button id="s-prev" type="button" aria-label="Giorno prima">‹</button>
+      <span id="s-count"></span>
+      <button id="s-next" type="button" aria-label="Giorno dopo">›</button>
+    </nav>
   </dialog>
 
   <div class="toast" id="toast" role="status"></div>

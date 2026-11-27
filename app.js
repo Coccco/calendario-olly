@@ -7,8 +7,8 @@
   // Ordine "mescolato" delle caselle e forme del mosaico
   const ORDER = [24, 3, 11, 7, 21, 15, 1, 12, 18, 5, 4, 9, 20, 2, 14, 17, 6, 13, 8, 10, 22, 19, 16, 23];
   const SHAPE = { 24: "big", 11: "w2", 12: "w2", 10: "w2", 16: "w2", 6: "w2", 17: "w2", 4: "w2", 20: "w2", 9: "w2", 19: "w2", 5: "h2", 13: "h2", 21: "h2" };
-  const GREEN = [11, 18, 4, 2, 13, 19], RED = [7, 15, 12, 20, 17, 10, 23];
-  const ICON = { 11: "tree", 15: "mug", 12: "mountains", 21: "ornaments", 5: "holly", 20: "candle", 6: "sprig", 10: "house", 16: "stars", 1: "star", 13: "lantern", 18: "snowflake", 17: "gift" };
+  const GREEN = [11, 18, 4, 2, 13, 14], RED = [7, 15, 12, 20, 17, 10, 23], TARTAN = [8, 19];
+  const ICON = { 11: "tree", 15: "mug", 12: "village", 21: "ornaments", 5: "holly", 20: "sprig", 6: "candycane", 10: "house", 16: "mountains", 1: "star", 13: "lantern", 18: "snowflake", 17: "pinecone", 14: "reindeer", 9: "stars", 3: "gift", 22: "candle" };
 
   const EMPTY = [
     ["💌", "La sorpresa di oggi si sta ancora incartando da sola… torna più tardi, ne vale la pena."],
@@ -162,7 +162,7 @@
     ORDER.forEach((day, i) => {
       const t = document.createElement("button");
       t.type = "button";
-      const color = GREEN.includes(day) ? "c-green" : RED.includes(day) ? "c-red" : "c-cream";
+      const color = TARTAN.includes(day) ? "c-tartan" : GREEN.includes(day) ? "c-green" : RED.includes(day) ? "c-red" : "c-cream";
       t.className = `tile ${SHAPE[day] || "sq"} ${color}`;
       t.style.setProperty("--i", i);
       if (ICON[day] && day !== 24) {
@@ -187,6 +187,12 @@
       } else {
         t.classList.add(seen.has(day) ? "seen" : "new");
         if (!seen.has(day)) t.append(el("span", "dot"));
+        else if (day !== 24) {
+          // casella già aperta: diventa un cartellino appeso
+          const tag = el("span", "htag");
+          tag.append(el("b", "", day), el("i", "", "♡"));
+          t.append(tag);
+        }
         if (day === todayNum) {
           t.classList.add("today");
           if (day !== 24) t.append(el("span", "label", "Oggi"));
@@ -197,10 +203,15 @@
       grid.appendChild(t);
     });
 
-    $("status").textContent = statusText(today, unlocked);
+    $("status").textContent = statusText(today, unlocked, seen);
+    requestAnimationFrame(() => grid.classList.add("no-pop"));
   }
 
-  function statusText(today, unlocked) {
+  function statusText(today, unlocked, seen) {
+    if (unlocked > 0) {
+      const n = [...seen].filter((d) => d <= unlocked).length;
+      return `${n} di 24 sorprese aperte`;
+    }
     if (unlocked === 0) {
       const days = Math.round((Date.parse("2026-12-01") - Date.parse(today)) / 864e5);
       return days === 1 ? "Domani si apre la prima casella ✨" : `Mancano ${days} giorni alla prima casella ✨`;
@@ -288,40 +299,46 @@
     tile.style.visibility = "";
   }
 
+  let currentDay = 0;
   function openSurprise(day) {
+    currentDay = day;
     const d = state.days.get(day);
     const body = $("s-body");
     body.textContent = "";
     $("s-date").textContent = `${day} dicembre`;
+    const title = $("s-title");
 
-    const hasContent = d && (d.title || d.message || d.link_url || (d.media && d.media.length));
+    const media = (d && d.media) || [];
+    const voucher = media.find((f) => f.type === "voucher");
+    const hasContent = d && (d.title || d.message || d.link_url || media.length);
     if (!hasContent) {
       const [emoji, text] = EMPTY[day % EMPTY.length];
-      $("s-title").textContent = "Un attimo di pazienza";
+      title.textContent = "Un attimo di pazienza";
       const box = el("div", "empty");
       box.append(el("div", "big-emoji", emoji), el("p", "", text));
       body.append(box);
     } else {
-      $("s-title").textContent = d.title || (day === 24 ? "Buon Natale!" : "La sorpresa di oggi");
+      title.textContent = d.title || (day === 24 ? "Buon Natale!" : "La sorpresa di oggi");
+      title.append(el("span", "t-heart", " ♡"));
+      if (voucher) body.append(voucherCard(voucher.caption));
+      const photos = media.filter((f) => f.url && f.type === "image");
+      photos.forEach((f, i) => {
+        const fig = el("figure", "polaroid");
+        fig.style.setProperty("--tilt", (i % 2 ? 2 : -2.2) + "deg");
+        fig.append(el("span", "tape"));
+        const img = document.createElement("img");
+        img.alt = f.caption || ""; img.src = f.url; img.decoding = "async";
+        fig.append(img, el("figcaption", "", f.caption || "♡"));
+        body.append(fig);
+      });
       if (d.message) body.append(el("p", "message", d.message));
-      if (d.media && d.media.length) {
+      const others = media.filter((f) => f.url && (f.type === "video" || f.type === "audio"));
+      if (others.length) {
         const m = el("div", "media");
-        for (const f of d.media) {
-          if (!f.url) continue;
-          let node;
-          if (f.type === "image") {
-            node = el("figure", "polaroid");
-            node.style.setProperty("--tilt", (m.children.length % 2 ? 1.6 : -1.8) + "deg");
-            const img = document.createElement("img");
-            img.alt = f.caption || ""; img.src = f.url;
-            node.append(img);
-            if (f.caption) node.append(el("figcaption", "", f.caption));
-            m.append(node);
-            continue;
-          }
-          else if (f.type === "video") { node = document.createElement("video"); node.controls = true; node.playsInline = true; node.preload = "metadata"; }
-          else { node = document.createElement("audio"); node.controls = true; node.preload = "metadata"; }
-          node.src = f.url;
+        for (const f of others) {
+          const node = document.createElement(f.type);
+          node.controls = true; node.preload = "metadata"; node.src = f.url;
+          if (f.type === "video") node.playsInline = true;
           m.append(node);
         }
         body.append(m);
@@ -334,18 +351,47 @@
     }
     const phrase = day === 24 ? LAST : day < state.unlocked ? PAST : NEXT[day % NEXT.length];
     body.append(el("p", "see-you", phrase));
+
+    // frecce: solo tra i giorni che può già aprire
+    $("s-count").textContent = `${day} / 24`;
+    $("s-prev").disabled = day <= 1;
+    $("s-next").disabled = day >= Math.min(state.unlocked, 24);
+
     const dlg = $("surprise");
-    dlg.showModal();
+    if (!dlg.open) { dlg.showModal(); startSnow(); }
     dlg.scrollTop = 0;
-    startSnow();
+    dlg.querySelector(".sheet").scrollTop = 0;
   }
+
+  function voucherCard(text) {
+    const wrap = el("div", "voucher");
+    const ticket = el("div", "ticket");
+    ticket.append(el("span", "v-small", "Buono per"), el("strong", "", text || "una sorpresa"), el("i", "", "♡"));
+    wrap.append(el("span", "envelope"), ticket, el("span", "twine"));
+    return wrap;
+  }
+
+  function goTo(day) {
+    if (day < 1 || day > state.unlocked || day > 24) return;
+    const sheet = $("surprise").querySelector(".sheet");
+    sheet.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${day > currentDay ? -30 : 30}px)` }], { duration: 160, fill: "forwards" })
+      .finished.then(() => {
+        openSurprise(day);
+        markSeen(day);
+        sheet.animate([{ opacity: 0, transform: `translateX(${day > currentDay ? 30 : -30}px)` }, { opacity: 1, transform: "translateX(0)" }], { duration: 220, easing: "ease-out", fill: "forwards" });
+      });
+  }
+
 
   const dlg = $("surprise");
   dlg.querySelector(".close").addEventListener("click", () => dlg.close());
+  $("s-prev").addEventListener("click", () => goTo(currentDay - 1));
+  $("s-next").addEventListener("click", () => goTo(currentDay + 1));
   dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
   dlg.addEventListener("close", () => {
     dlg.querySelectorAll("video, audio").forEach((m) => m.pause());
     stopSnow();
+    if (state) render();
   });
 
   // Neve che cade sopra la sorpresa appena si apre

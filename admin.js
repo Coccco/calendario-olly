@@ -69,7 +69,7 @@
       b.type = "button";
       b.className = "day" + (d <= v ? " visible" : "");
       const filled = isFilled(r);
-      const media = r?.media?.length || 0;
+      const media = (r?.media || []).filter((m) => m.type !== "voucher").length;
       b.innerHTML = `
         <span class="pill ${filled ? "ready" : "empty"}">${filled ? "pronto" : "vuoto"}</span>
         <span class="n">${d}</span>
@@ -101,6 +101,7 @@
     $("f-message").value = current.message;
     $("f-link").value = current.link_url;
     $("f-link-label").value = current.link_label;
+    $("f-voucher").value = (current.media.find((m) => m.type === "voucher") || {}).caption || "";
     $("upload-status").textContent = "";
     $("save-error").textContent = "";
     renderMedia();
@@ -112,6 +113,9 @@
     current.message = $("f-message").value.trim();
     current.link_url = $("f-link").value.trim();
     current.link_label = $("f-link-label").value.trim();
+    const v = $("f-voucher").value.trim();
+    current.media = current.media.filter((m) => m.type !== "voucher");
+    if (v) current.media.push({ type: "voucher", caption: v, name: "buono" });
   }
 
   async function saveRow() {
@@ -143,7 +147,7 @@
 
   $("clear-day").addEventListener("click", async () => {
     if (!confirm(`Svuotare il ${current.day} dicembre? Testo e file verranno cancellati.`)) return;
-    const paths = current.media.map((m) => m.path);
+    const paths = current.media.map((m) => m.path).filter(Boolean);
     if (paths.length) await sb.storage.from("surprises").remove(paths);
     const { error } = await sb.from("days").delete().eq("day", current.day);
     if (error) return ($("save-error").textContent = error.message);
@@ -188,13 +192,14 @@
   async function renderMedia() {
     const list = $("media-list");
     list.textContent = "";
-    const imgs = current.media.filter((m) => m.type === "image").map((m) => m.path);
+    const imgs = current.media.filter((m) => m.type === "image" && m.path).map((m) => m.path);
     const thumbs = new Map();
     if (imgs.length) {
       const { data } = await sb.storage.from("surprises").createSignedUrls(imgs, 600);
       for (const s of data || []) thumbs.set(s.path, s.signedUrl);
     }
     current.media.forEach((m, idx) => {
+      if (m.type === "voucher") return;
       const li = document.createElement("li");
       const th = document.createElement("span");
       th.className = "thumb";

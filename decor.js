@@ -41,6 +41,10 @@ window.DECOR = (() => {
     candle: `<path d="M25 28 H39 V58 H25Z"/><path d="M32 28 V22"/><path fill="${FLAME}" stroke="none" d="M32 7 C26.5 14 27.5 20 32 22 C36.5 20 37.5 14 32 7Z"/><path d="M18 58 H46"/><path d="M14 12 l.8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z"/>`,
     gift: `<path d="M12 28 H52 V56 H12Z"/><path d="M8 20 H56 V28 H8Z"/><path d="M32 20 V56"/><path d="M32 20 C24 8 14 10 18 18 C20 21 28 20 32 20 C36 20 44 21 46 18 C50 10 40 8 32 20Z"/>`,
     stars: `<path d="M20 14 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5-6 -6-2.5 6-2.5z"/><path d="M46 30 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6-4 -4-1.6 4-1.6z"/><path d="M0 58 Q22 44 40 52 T64 50"/><circle cx="54" cy="10" r=".8"/><circle cx="34" cy="8" r=".8"/>`,
+    reindeer: `<path d="M14 40 Q16 30 26 30 H42 Q48 30 50 24 L53 18"/><path d="M53 18 Q57 17 58 20 L55 23 Q52 24 50 24"/><path d="M53 18 L50 10 M50 10 L46 6 M50 10 L54 6 M52 14 L57 11 M51 13 L47 13"/><path d="M18 40 L12 52 M24 40 L22 54 M38 40 L42 52 M44 38 L52 50"/><path d="M14 40 Q10 38 9 34"/><path d="M2 58 Q30 54 62 58"/>`,
+    candycane: `<path d="M24 58 V22 Q24 8 36 8 Q48 8 48 20 V24"/><path d="M24 50 l6-4 M24 40 l6-4 M24 30 l6-4 M26 18 l7 2 M37 10 l2 7 M44 14 l-5 5"/><path d="M40 26 C34 22 30 26 36 31 C38 33 40 34 40 34 C40 34 42 33 44 31 C50 26 46 22 40 26Z" stroke-width="1.2"/>`,
+    pinecone: `<path d="M32 6 V12"/><path d="M32 12 C18 18 16 36 22 48 C26 56 38 56 42 48 C48 36 46 18 32 12Z"/><path d="M24 22 Q32 28 40 22 M20 32 Q32 40 44 32 M21 42 Q32 50 43 42 M32 14 V54 M26 18 L22 48 M38 18 L42 48"/><path d="M32 8 Q24 2 18 6 M32 8 Q40 2 46 6"/>`,
+    village: `<path d="M0 54 H64"/><path d="M22 54 V38 L32 30 L42 38 V54"/><path d="M29 54 V46 H35 V54 M25 41 h4 v4 h-4z M35 41 h4 v4 h-4z"/><path d="M38 34 V28 H41 V36"/><path d="M4 54 L9 38 L14 54 M7 46 H11 M48 54 L54 34 L60 54 M51 46 H57 M50 40 H58"/><circle cx="20" cy="12" r=".9"/><circle cx="46" cy="16" r=".9"/><circle cx="56" cy="8" r=".9"/>`,
     holly: HOLLY,
   };
 
@@ -93,6 +97,7 @@ window.DECOR = (() => {
   function mount() {
     document.querySelectorAll("[data-bow]").forEach((n) => (n.innerHTML = bow()));
     document.querySelectorAll("[data-heart]").forEach((n) => (n.innerHTML = HEART));
+    document.querySelectorAll("[data-holly]").forEach((n) => (n.innerHTML = icon("holly") + icon("sprig")));
     document.querySelectorAll(".branch").forEach((n, i) => (n.innerHTML = branch(7 + i * 13)));
   }
 

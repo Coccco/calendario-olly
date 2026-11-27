@@ -9,31 +9,53 @@
   <link rel="icon" href="admin-icon-192.png?v=3" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="admin-icon-180.png?v=3">
   <link rel="manifest" href="admin.webmanifest?v=3">
-  <meta name="apple-mobile-web-app-title" content="Admin Olly">
+  <meta name="apple-mobile-web-app-title" content="Admin Avvento">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261127b">
+  <link rel="stylesheet" href="admin.css?v=20261127c">
 </head>
 <body>
   <!-- Login -->
   <main id="login" class="wrap narrow" hidden>
-    <h1>Area di Cocco 🔑</h1>
+    <h1>Area admin 🔑</h1>
     <form id="login-form" class="card">
       <label>Email <input type="email" id="email" autocomplete="username" required></label>
       <label>Password <input type="password" id="password" autocomplete="current-password" required></label>
       <button class="primary" type="submit">Entra</button>
       <p class="error" id="login-error" role="alert"></p>
     </form>
+    <p class="muted small center"><button type="button" class="linkish" id="to-signup">Hai un codice d'invito? Crea il tuo calendario</button></p>
+  </main>
+
+  <!-- Nuovo calendario (con invito) -->
+  <main id="signup" class="wrap narrow" hidden>
+    <h1>Il tuo calendario 🎁</h1>
+    <form id="signup-form" class="card">
+      <label>Codice d'invito <input id="u-invite" autocomplete="off" autocapitalize="off" required></label>
+      <div class="two">
+        <label>Nome di lei <input id="u-her" maxlength="40" required placeholder="Es. Giulia"></label>
+        <label>La tua firma <input id="u-sign" maxlength="40" placeholder="Es. Marco"></label>
+      </div>
+      <label>Nome del link <input id="u-slug" maxlength="30" required autocapitalize="off" spellcheck="false" placeholder="es. giulia"></label>
+      <p class="muted small" id="u-slug-hint" style="margin:-8px 0 14px">Solo minuscole, numeri e trattini.</p>
+      <label>Parola segreta per lei <input id="u-code" maxlength="60" required autocomplete="off" placeholder="Es. il nome del vostro posto"></label>
+      <p class="muted small" style="margin:-8px 0 14px">La scrive lei la prima volta che apre il calendario. Puoi cambiarla dopo.</p>
+      <label>La tua email <input type="email" id="u-email" autocomplete="username" required></label>
+      <label>Una password per te <input type="password" id="u-password" minlength="8" autocomplete="new-password" required></label>
+      <button class="primary" type="submit" id="u-save">Crea il calendario</button>
+      <p class="error" id="signup-error" role="alert"></p>
+    </form>
+    <p class="muted small center"><button type="button" class="linkish" id="to-login">Hai già un account? Entra</button></p>
   </main>
 
   <!-- Pannello -->
   <main id="panel" class="wrap" hidden>
     <header class="top">
       <div>
-        <h1>Le sorprese di Olly</h1>
+        <h1 id="panel-title">Le sorprese</h1>
         <p class="muted" id="today-line"></p>
       </div>
       <button id="logout" class="ghost" type="button">Esci</button>
@@ -47,6 +69,24 @@
         <button id="preview-btn" class="primary" type="button">Apri anteprima</button>
       </div>
     </section>
+
+    <details class="card settings" id="settings">
+      <summary><strong>Il tuo calendario</strong> <span class="muted">nomi, parola segreta e link</span></summary>
+      <form id="settings-form">
+        <div class="two">
+          <label>Nome di lei <input id="s-her" maxlength="40" required placeholder="Es. Giulia"></label>
+          <label>La tua firma <input id="s-sign" maxlength="40" placeholder="Es. Marco"></label>
+        </div>
+        <label>Frase sotto il nome <input id="s-intro" maxlength="140"></label>
+        <label>Parola segreta per lei <input id="s-code" maxlength="60" autocomplete="off" placeholder=""></label>
+        <p class="muted small" id="s-code-hint" style="margin:-8px 0 14px">Maiuscole e spazi non contano. Scegli qualcosa che sa solo lei.</p>
+        <label>Il link da mandarle
+          <div class="row"><input id="s-link" readonly><button type="button" class="ghost" id="s-copy">Copia</button></div>
+        </label>
+        <button class="primary" type="submit" id="s-save">Salva</button>
+        <p class="error" id="s-error" role="alert"></p>
+      </form>
+    </details>
 
     <section class="days" id="days"></section>
   </main>
@@ -91,7 +131,7 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="config.js?v=20261127b"></script>
-  <script src="admin.js?v=20261127b"></script>
+  <script src="config.js?v=20261127c"></script>
+  <script src="admin.js?v=20261127c"></script>
 </body>
 </html>

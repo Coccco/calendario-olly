@@ -106,3 +106,14 @@ button:disabled { opacity: .55; cursor: wait; }
 .media-list .name { display: grid; gap: 2px; }
 .media-list .name small { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
 .media-list .caption { padding: 6px 10px; font-size: 15px; border-radius: 8px; }
+
+/* Impostazioni del calendario */
+.settings summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.settings summary::-webkit-details-marker { display: none; }
+.settings summary::before { content: "▸"; transition: transform .2s; }
+.settings[open] summary::before { transform: rotate(90deg); }
+.settings { margin-bottom: 18px; }
+.settings form { margin-top: 14px; }
+.settings .row input[readonly] { color: inherit; opacity: .8; }
+.center { text-align: center; margin-top: 14px; }
+.linkish { background: none; border: 0; padding: 4px; color: var(--red); text-decoration: underline; font: inherit; cursor: pointer; }

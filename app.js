@@ -1,8 +1,15 @@
 (() => {
   const C = window.CONFIG;
   const $ = (id) => document.getElementById(id);
-  const CODE_KEY = "avvento-codice";
-  const SEEN_KEY = "avvento-visti";
+  // Ogni coppia ha il suo calendario: ?c=nome. Senza parametro è quello di Olly.
+  const SLUG = (new URLSearchParams(location.search).get("c") || "olly").trim().toLowerCase();
+  const IS_DEFAULT = SLUG === "olly";
+  const CODE_KEY = IS_DEFAULT ? "avvento-codice" : `avvento-codice-${SLUG}`;
+  const SEEN_KEY = IS_DEFAULT ? "avvento-visti" : `avvento-visti-${SLUG}`;
+  // Nomi: quelli di config.js per Olly, poi arrivano dal server per ogni calendario.
+  const names = IS_DEFAULT
+    ? { her: C.NOME_LEI, sign: C.FIRMA, intro: C.INTRO }
+    : { her: "", sign: "", intro: C.INTRO };
 
   // Ordine "mescolato" delle caselle e forme del mosaico
   const ORDER = [24, 3, 11, 7, 21, 15, 1, 12, 18, 5, 4, 9, 20, 2, 14, 17, 6, 13, 8, 10, 22, 19, 16, 23];
@@ -12,7 +19,7 @@
 
   const EMPTY = [
     ["💌", "La sorpresa di oggi si sta ancora incartando da sola… torna più tardi, ne vale la pena."],
-    ["🤫", "Oggi la sorpresa è segreta anche per il calendario. Chiedi a Cocco, forse è in tasca sua."],
+    ["🤫", () => `Oggi la sorpresa è segreta anche per il calendario. Chiedi a ${names.sign || "lui"}, forse è in tasca sua.`],
     ["🫶", "Oggi niente pacchetto qui dentro: vale un abbraccio, da riscuotere appena vi vedete."],
     ["⭐", "Questa casella oggi custodisce solo una cosa: un bacio. Da ritirare di persona."],
     ["☕", "Il regalo di oggi è in viaggio. Nel frattempo, sappi che stai benissimo anche oggi."],
@@ -25,7 +32,7 @@
     "A domani! E niente trucchi con l'orologio 🤫",
   ];
   const PAST = "Questa era di qualche giorno fa: hai già aperto quella di oggi? 👀";
-  const LAST = "Buon Natale, Olly! Il calendario finisce qui 🎄";
+  const LAST = () => `Buon Natale${names.her ? ", " + names.her : ""}! Il calendario finisce qui 🎄`;
 
   const params = new URLSearchParams(location.search);
   const previewDate = params.get("preview");
@@ -43,11 +50,40 @@
 
   // ---------- testi e neve ----------
   DECOR.mount();
-  $("tag-name").textContent = C.NOME_LEI;
-  $("her-name").textContent = C.NOME_LEI;
-  $("intro-text").textContent = C.INTRO;
-  $("signature").textContent = C.FIRMA;
-  document.title = `Per ${C.NOME_LEI} 🎁`;
+  function applyNames() {
+    $("tag-name").textContent = names.her;
+    $("her-name").textContent = names.her;
+    $("intro-text").textContent = names.intro;
+    $("signature").textContent = names.sign;
+    document.title = names.her ? `Per ${names.her} 🎁` : "Calendario dell'avvento 🎁";
+    const t = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    if (t) t.content = names.her ? `Per ${names.her}` : "Avvento";
+  }
+  applyNames();
+  if (!IS_DEFAULT) {
+    // App sulla schermata Home: deve riaprire questo calendario, non quello di Olly.
+    const base = new URL("./", location.href).href;
+    const link = document.querySelector('link[rel="manifest"]');
+    if (link) {
+      const m = {
+        name: "Calendario dell'avvento", short_name: "Avvento", id: `./?c=${SLUG}`,
+        start_url: `${base}?c=${SLUG}`, scope: base, display: "standalone",
+        background_color: "#10261b", theme_color: "#10261b",
+        icons: [
+          { src: base + "icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: base + "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+        ],
+      };
+      link.href = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(m));
+    }
+    fetch(`${C.SUPABASE_URL}/functions/v1/calendar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: C.SUPABASE_KEY, Authorization: `Bearer ${C.SUPABASE_KEY}` },
+      body: JSON.stringify({ calendar: SLUG, info: true }),
+    }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (d && d.her_name && !names.her) { names.her = d.her_name; applyNames(); }
+    }).catch(() => {});
+  }
 
   const snow = document.querySelector(".snow");
   for (let i = 0; i < 26; i++) {
@@ -69,12 +105,19 @@
         apikey: C.SUPABASE_KEY,
         Authorization: `Bearer ${token || C.SUPABASE_KEY}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, calendar: SLUG }),
     });
+    if (res.status === 404) throw new Error("calendario");
     if (res.status === 401) throw new Error("codice");
     if (!res.ok) throw new Error("server");
     const data = await res.json();
     fetchedAt = Date.now();
+    if (data.calendar) {
+      names.her = data.calendar.her_name || names.her;
+      names.sign = data.calendar.signature || names.sign;
+      names.intro = data.calendar.intro || names.intro;
+      applyNames();
+    }
     return { ...data, days: new Map(data.days.map((d) => [d.day, d])) };
   }
 
@@ -127,6 +170,7 @@
     } catch (e) {
       $("code-error").textContent = e.message === "codice"
         ? "Mmm, non è questa. Riprova 💭"
+        : e.message === "calendario" ? "Questo calendario non esiste: controlla il link."
         : "Il calendario non risponde. Riprova tra un attimo.";
       const f = $("code-form");
       f.classList.remove("shake"); void f.offsetWidth; f.classList.add("shake");
@@ -266,7 +310,7 @@
 
     const env = el("div", "op-env");
     const letter = el("div", "op-letter");
-    letter.append(el("span", "", `${day} dicembre`), el("b", "", "Per " + C.NOME_LEI));
+    letter.append(el("span", "", `${day} dicembre`), el("b", "", "Per " + names.her));
     const flap = el("div", "op-flap");
     const seal = el("i", "op-seal");
     env.append(el("div", "op-back"), letter, el("div", "op-front"), flap, seal);
@@ -318,7 +362,8 @@
     const voucher = media.find((f) => f.type === "voucher");
     const hasContent = d && (d.title || d.message || d.link_url || media.length);
     if (!hasContent) {
-      const [emoji, text] = EMPTY[day % EMPTY.length];
+      const [emoji, t] = EMPTY[day % EMPTY.length];
+      const text = typeof t === "function" ? t() : t;
       title.textContent = "Un attimo di pazienza";
       const box = el("div", "empty");
       box.append(el("div", "big-emoji", emoji), el("p", "", text));
@@ -355,7 +400,7 @@
         body.append(a);
       }
     }
-    const phrase = day === 24 ? LAST : day < state.unlocked ? PAST : NEXT[day % NEXT.length];
+    const phrase = day === 24 ? LAST() : day < state.unlocked ? PAST : NEXT[day % NEXT.length];
     body.append(el("p", "see-you", phrase));
 
     // frecce: solo tra i giorni che può già aprire
@@ -532,7 +577,7 @@
       document.body.innerHTML = '<p style="padding:24px">Anteprima non permessa: rifai il login nella pagina admin.</p>';
     }
     input.addEventListener("change", () => {
-      if (input.value) location.search = `?preview=${input.value}`;
+      if (input.value) location.search = `?preview=${input.value}${IS_DEFAULT ? "" : "&c=" + SLUG}`;
     });
   }
 

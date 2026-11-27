@@ -1,6 +1,6 @@
 {
-  "name": "Admin Olly",
-  "short_name": "Admin Olly",
+  "name": "Admin Avvento",
+  "short_name": "Admin Avvento",
   "id": "./admin.html",
   "start_url": "./admin.html",
   "scope": "./",

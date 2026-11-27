@@ -4,7 +4,9 @@
   const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY);
   const MAX = 50 * 1024 * 1024;
 
+  let cal = null;       // il calendario di questo admin: { slug, her_name, signature, intro, code }
   let days = new Map(); // giorno -> riga
+  const her = () => (cal && cal.her_name) || "lei";
   let current = null;   // riga in modifica
 
   // Data di oggi a Roma, "AAAA-MM-GG"
@@ -40,10 +42,14 @@
 
   async function showPanel() {
     $("panel").hidden = false;
+    const { data, error } = await sb.from("calendars").select("*").maybeSingle();
+    if (error || !data) return toast("Questo account non ha un calendario: sei admin?");
+    cal = data;
+    fillSettings();
     const v = visibleUpTo();
     $("today-line").textContent = v === 0
-      ? "Olly non vede ancora nessuna casella: si parte il 1° dicembre."
-      : `Oggi Olly può aprire le caselle fino al ${v} dicembre (bordo dorato).`;
+      ? `${her()} non vede ancora nessuna casella: si parte il 1° dicembre.`
+      : `Oggi ${her()} può aprire le caselle fino al ${v} dicembre (bordo dorato).`;
     const t = romeToday();
     if (t >= "2026-12-01" && t <= "2026-12-26") $("preview-date").value = t;
     await loadDays();
@@ -51,7 +57,7 @@
 
   // ---------- elenco giorni ----------
   async function loadDays() {
-    const { data, error } = await sb.from("days").select("*").order("day");
+    const { data, error } = await sb.from("days").select("*").eq("calendar", cal.slug).order("day");
     if (error) return toast("Non riesco a leggere i giorni: sei admin?");
     days = new Map(data.map((r) => [r.day, r]));
     renderDays();
@@ -91,10 +97,10 @@
     $("ed-title").textContent = `${day} dicembre${day === 24 ? " · il gran giorno" : ""}`;
     const badge = $("ed-badge");
     if (day <= visibleUpTo()) {
-      badge.textContent = "⚠️ Olly può già aprire questa casella: le modifiche le vede subito.";
+      badge.textContent = `⚠️ ${her()} può già aprire questa casella: le modifiche le vede subito.`;
       badge.className = "badge-line warn";
     } else {
-      badge.textContent = `Olly la potrà aprire dal ${day} dicembre. Puoi cambiarla quando vuoi fino ad allora.`;
+      badge.textContent = `${her()} la potrà aprire dal ${day} dicembre. Puoi cambiarla quando vuoi fino ad allora.`;
       badge.className = "badge-line";
     }
     $("f-title").value = current.title;
@@ -120,8 +126,8 @@
 
   async function saveRow() {
     readForm();
-    const row = { ...current, updated_at: new Date().toISOString() };
-    const { data, error } = await sb.from("days").upsert(row).select().single();
+    const row = { ...current, calendar: cal.slug, updated_at: new Date().toISOString() };
+    const { data, error } = await sb.from("days").upsert(row, { onConflict: "calendar,day" }).select().single();
     if (error) throw error;
     days.set(data.day, data);
     current = structuredClone(data);
@@ -149,7 +155,7 @@
     if (!confirm(`Svuotare il ${current.day} dicembre? Testo e file verranno cancellati.`)) return;
     const paths = current.media.map((m) => m.path).filter(Boolean);
     if (paths.length) await sb.storage.from("surprises").remove(paths);
-    const { error } = await sb.from("days").delete().eq("day", current.day);
+    const { error } = await sb.from("days").delete().eq("calendar", cal.slug).eq("day", current.day);
     if (error) return ($("save-error").textContent = error.message);
     days.delete(current.day);
     renderDays();
@@ -179,7 +185,7 @@
       if (file.size > MAX) { status.textContent = `"${file.name}" pesa più di 50 MB: comprimilo e riprova.`; continue; }
       status.textContent = `Caricamento ${i + 1} di ${files.length}: ${file.name}…`;
       const safe = file.name.normalize("NFD").replace(/[^\w.-]+/g, "_").slice(-60);
-      const path = `giorno-${current.day}/${Date.now()}-${safe}`;
+      const path = `${cal.slug}/giorno-${current.day}/${Date.now()}-${safe}`;
       const { error } = await sb.storage.from("surprises").upload(path, file, { contentType: file.type || undefined });
       if (error) { status.textContent = `Errore con "${file.name}": ${error.message}`; continue; }
       current.media.push({ path, type, name: file.name });
@@ -235,7 +241,46 @@
   // ---------- anteprima ----------
   $("preview-btn").addEventListener("click", () => {
     const d = $("preview-date").value;
-    if (d) window.open(`index.html?preview=${d}`, "_blank");
+    if (d) window.open(`index.html?preview=${d}${cal.slug === "olly" ? "" : "&c=" + cal.slug}`, "_blank");
+  });
+
+  // ---------- impostazioni del calendario ----------
+  const herLink = () => new URL(cal.slug === "olly" ? "./" : `./?c=${cal.slug}`, location.href).href;
+
+  function fillSettings() {
+    $("panel-title").textContent = `Le sorprese di ${her()}`;
+    document.title = `Admin · ${her()}`;
+    $("s-her").value = cal.her_name;
+    $("s-sign").value = cal.signature;
+    $("s-intro").value = cal.intro;
+    $("s-code").value = cal.code || "";
+    $("s-code").placeholder = cal.slug === "olly" ? "(quella già impostata in Supabase)" : "Es. il nome del vostro posto";
+    $("s-link").value = herLink();
+    if (!cal.her_name || (!cal.code && cal.slug !== "olly")) $("settings").open = true;
+  }
+
+  $("settings-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("s-error").textContent = "";
+    const code = $("s-code").value.trim();
+    if (!code && cal.slug !== "olly") return ($("s-error").textContent = "Scegli una parola segreta, sennò lei non può entrare.");
+    const patch = {
+      her_name: $("s-her").value.trim(), signature: $("s-sign").value.trim(),
+      intro: $("s-intro").value.trim(), code: code || null,
+    };
+    $("s-save").disabled = true;
+    const { data, error } = await sb.from("calendars").update(patch).eq("slug", cal.slug).select().single();
+    $("s-save").disabled = false;
+    if (error) return ($("s-error").textContent = "Non salvato: " + error.message);
+    cal = data;
+    fillSettings();
+    renderDays();
+    toast("Calendario salvato 💛");
+  });
+
+  $("s-copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(herLink()); toast("Link copiato"); }
+    catch { $("s-link").select(); }
   });
 
   let toastTimer;

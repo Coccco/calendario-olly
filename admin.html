@@ -27,6 +27,28 @@
       <button class="primary" type="submit">Entra</button>
       <p class="error" id="login-error" role="alert"></p>
     </form>
+    <p class="muted small center"><button type="button" class="linkish" id="to-signup">Hai un codice d'invito? Crea il tuo calendario</button></p>
+  </main>
+
+  <!-- Nuovo calendario (con invito) -->
+  <main id="signup" class="wrap narrow" hidden>
+    <h1>Il tuo calendario 🎁</h1>
+    <form id="signup-form" class="card">
+      <label>Codice d'invito <input id="u-invite" autocomplete="off" autocapitalize="off" required></label>
+      <div class="two">
+        <label>Nome di lei <input id="u-her" maxlength="40" required placeholder="Es. Giulia"></label>
+        <label>La tua firma <input id="u-sign" maxlength="40" placeholder="Es. Marco"></label>
+      </div>
+      <label>Nome del link <input id="u-slug" maxlength="30" required autocapitalize="off" spellcheck="false" placeholder="es. giulia"></label>
+      <p class="muted small" id="u-slug-hint" style="margin:-8px 0 14px">Solo minuscole, numeri e trattini.</p>
+      <label>Parola segreta per lei <input id="u-code" maxlength="60" required autocomplete="off" placeholder="Es. il nome del vostro posto"></label>
+      <p class="muted small" style="margin:-8px 0 14px">La scrive lei la prima volta che apre il calendario. Puoi cambiarla dopo.</p>
+      <label>La tua email <input type="email" id="u-email" autocomplete="username" required></label>
+      <label>Una password per te <input type="password" id="u-password" minlength="8" autocomplete="new-password" required></label>
+      <button class="primary" type="submit" id="u-save">Crea il calendario</button>
+      <p class="error" id="signup-error" role="alert"></p>
+    </form>
+    <p class="muted small center"><button type="button" class="linkish" id="to-login">Hai già un account? Entra</button></p>
   </main>
 
   <!-- Pannello -->

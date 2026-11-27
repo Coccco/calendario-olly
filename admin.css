@@ -115,3 +115,5 @@ button:disabled { opacity: .55; cursor: wait; }
 .settings { margin-bottom: 18px; }
 .settings form { margin-top: 14px; }
 .settings .row input[readonly] { color: inherit; opacity: .8; }
+.center { text-align: center; margin-top: 14px; }
+.linkish { background: none; border: 0; padding: 4px; color: var(--red); text-decoration: underline; font: inherit; cursor: pointer; }

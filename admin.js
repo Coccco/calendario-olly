@@ -21,7 +21,8 @@
   // ---------- login ----------
   async function boot() {
     const { data } = await sb.auth.getSession();
-    if (data.session) showPanel(); else $("login").hidden = false;
+    if (data.session) showPanel();
+    else if ($("signup").hidden) $("login").hidden = false;
   }
 
   $("login-form").addEventListener("submit", async (e) => {
@@ -35,12 +36,58 @@
     showPanel();
   });
 
+  // ---------- nuovo calendario con invito ----------
+  const base = new URL("./", location.href).href;
+  const slugify = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30);
+  let slugTouched = false;
+  const showSlug = () => ($("u-slug-hint").textContent = $("u-slug").value
+    ? `Il suo link sarà ${base}?c=${$("u-slug").value}` : "Solo minuscole, numeri e trattini.");
+
+  $("to-signup").addEventListener("click", () => { $("login").hidden = true; $("signup").hidden = false; });
+  $("to-login").addEventListener("click", () => { $("signup").hidden = true; $("login").hidden = false; });
+  if (new URLSearchParams(location.search).has("nuovo")) { $("login").hidden = true; $("signup").hidden = false; }
+  $("u-her").addEventListener("input", () => { if (!slugTouched) { $("u-slug").value = slugify($("u-her").value); showSlug(); } });
+  $("u-slug").addEventListener("input", () => { slugTouched = true; $("u-slug").value = slugify($("u-slug").value); showSlug(); });
+
+  $("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("signup-error");
+    err.textContent = "";
+    const btn = $("u-save");
+    btn.disabled = true;
+    const email = $("u-email").value.trim(), password = $("u-password").value;
+    try {
+      const res = await fetch(`${C.SUPABASE_URL}/functions/v1/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: C.SUPABASE_KEY, Authorization: `Bearer ${C.SUPABASE_KEY}` },
+        body: JSON.stringify({
+          invite: $("u-invite").value, her_name: $("u-her").value, signature: $("u-sign").value,
+          slug: $("u-slug").value, code: $("u-code").value, email, password,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Qualcosa è andato storto, riprova.");
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw new Error("Calendario creato, ma il login non è riuscito: prova a entrare.");
+      $("signup").hidden = true;
+      await showPanel();
+      $("settings").open = true;
+      toast("Calendario creato 🎉 Ora riempi le caselle!");
+    } catch (ex) {
+      err.textContent = ex.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   $("logout").addEventListener("click", async () => {
     await sb.auth.signOut();
     location.reload();
   });
 
   async function showPanel() {
+    $("signup").hidden = true;
     $("panel").hidden = false;
     const { data, error } = await sb.from("calendars").select("*").maybeSingle();
     if (error || !data) return toast("Questo account non ha un calendario: sei admin?");

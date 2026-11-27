@@ -30,6 +30,7 @@
   const params = new URLSearchParams(location.search);
   const previewDate = params.get("preview");
 
+  let lastOpened = 0;
   let state = null; // { today, unlocked, days: Map }
   let fetchedAt = 0;
   let creds = {};   // { code } oppure { preview_date, token }
@@ -162,6 +163,7 @@
     ORDER.forEach((day, i) => {
       const t = document.createElement("button");
       t.type = "button";
+      t.dataset.day = day;
       const color = TARTAN.includes(day) ? "c-tartan" : GREEN.includes(day) ? "c-green" : RED.includes(day) ? "c-red" : "c-cream";
       t.className = `tile ${SHAPE[day] || "sq"} ${color}`;
       t.style.setProperty("--i", i);
@@ -189,7 +191,7 @@
         if (!seen.has(day)) t.append(el("span", "dot"));
         else if (day !== 24) {
           // casella già aperta: diventa un cartellino appeso
-          const tag = el("span", "htag");
+          const tag = el("span", "htag" + (day === lastOpened ? " swing" : ""));
           tag.append(el("b", "", day), el("i", "", "♡"));
           t.append(tag);
         }
@@ -223,6 +225,10 @@
   let opening = false;
   async function onTile(day, tile) {
     if (opening) return;
+    if (day > state.unlocked && Date.now() - fetchedAt > 60e3) {
+      try { await reload(); } catch {}
+      if (day <= state.unlocked) return onTile(day, $("grid").querySelector(`[data-day="${day}"]`) || tile);
+    }
     if (day > state.unlocked) {
       tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
       const left = day - state.unlocked;
@@ -358,6 +364,10 @@
     $("s-next").disabled = day >= Math.min(state.unlocked, 24);
 
     const dlg = $("surprise");
+    const sheetEl = dlg.querySelector(".sheet");
+    sheetEl.classList.remove("enter"); void sheetEl.offsetWidth; sheetEl.classList.add("enter");
+    sheetEl.classList.toggle("xmas", day === 24 && !!hasContent);
+    lastOpened = day;
     if (!dlg.open) { dlg.showModal(); startSnow(); }
     dlg.scrollTop = 0;
     dlg.querySelector(".sheet").scrollTop = 0;
@@ -374,11 +384,12 @@
   function goTo(day) {
     if (day < 1 || day > state.unlocked || day > 24) return;
     const sheet = $("surprise").querySelector(".sheet");
-    sheet.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${day > currentDay ? -30 : 30}px)` }], { duration: 160, fill: "forwards" })
+    const dir = day > currentDay ? 1 : -1;
+    sheet.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${-30 * dir}px)` }], { duration: 160, fill: "forwards" })
       .finished.then(() => {
         openSurprise(day);
         markSeen(day);
-        sheet.animate([{ opacity: 0, transform: `translateX(${day > currentDay ? 30 : -30}px)` }, { opacity: 1, transform: "translateX(0)" }], { duration: 220, easing: "ease-out", fill: "forwards" });
+        sheet.animate([{ opacity: 0, transform: `translateX(${30 * dir}px)` }, { opacity: 1, transform: "translateX(0)" }], { duration: 220, easing: "ease-out", fill: "forwards" });
       });
   }
 
@@ -388,6 +399,15 @@
   $("s-prev").addEventListener("click", () => goTo(currentDay - 1));
   $("s-next").addEventListener("click", () => goTo(currentDay + 1));
   dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+  // scorri col dito a destra/sinistra per cambiare giorno
+  let touch = null;
+  dlg.addEventListener("touchstart", (e) => { const t = e.touches[0]; touch = { x: t.clientX, y: t.clientY }; }, { passive: true });
+  dlg.addEventListener("touchend", (e) => {
+    if (!touch) return;
+    const t = e.changedTouches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y;
+    touch = null;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8 && !e.target.closest("video, audio, input")) goTo(currentDay + (dx < 0 ? 1 : -1));
+  }, { passive: true });
   dlg.addEventListener("close", () => {
     dlg.querySelectorAll("video, audio").forEach((m) => m.pause());
     stopSnow();

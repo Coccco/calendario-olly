@@ -249,6 +249,7 @@
     const v = (r.media || []).find((m) => m.type === "voucher");
     $("f-voucher").value = v?.caption || "";
     $("f-voucher-label").value = v && typeof v.label === "string" ? v.label : DEF_LABEL;
+    $("f-download").checked = r.allow_download !== false;
     setNotify("m", r.notify_morning);
     setNotify("e", r.notify_evening);
     $("f-count").textContent = `${$("f-message").value.length} / 1000`;
@@ -292,6 +293,7 @@
     current.message = $("f-message").value.trim();
     current.link_url = $("f-link").value.trim();
     current.link_label = $("f-link-label").value.trim();
+    current.allow_download = $("f-download").checked;
     current.notify_morning = $("f-on-m").checked ? $("f-notify-m").value.trim() : OFF;
     current.notify_evening = $("f-on-e").checked ? $("f-notify-e").value.trim() : OFF;
     const v = $("f-voucher").value.trim();
@@ -405,11 +407,20 @@
     toast("Giorno svuotato");
   });
 
+  // Audio che parte da solo quando lei apre la casella (stessa regola del calendario)
+  function autoAudio(media = current.media) {
+    const a = media.filter((m) => m.type === "audio");
+    return a.some((m) => typeof m.autoplay === "boolean") ? a.find((m) => m.autoplay) : a[0];
+  }
+  function setAutoAudio(target) {
+    for (const m of current.media) if (m.type === "audio") m.autoplay = m === target;
+  }
+
   // ---------- schede del contenuto ----------
   const ATTACH = {
     image: ["image/*", "Aggiungi foto", "Le foto diventano polaroid. Sotto ognuna puoi scrivere una didascalia.", "Ancora nessuna foto."],
     video: ["video/*", "Aggiungi un video", "Lei preme play per guardarlo. Meglio video corti (max 50 MB).", "Ancora nessun video."],
-    audio: ["audio/*", "Carica un audio", "Il primo audio parte da solo quando lei apre la casella (se non c'è, suonano dei campanellini). Meglio vocali brevi, fino a 2 minuti.", "Ancora nessun audio."],
+    audio: ["audio/*", "Carica un audio", "Scegli tu con l'interruttore se un audio parte da solo quando lei apre la casella; se lo spegni, lei lo ascolta premendo ▶. Senza audio suonano dei campanellini. Meglio vocali brevi, fino a 2 minuti.", "Ancora nessun audio."],
   };
   function showPane(name, play = true) {
     pane = name;
@@ -484,10 +495,11 @@
     if (d.message) sheet.append(el("p", "pv-msg", d.message));
     const extra = [];
     const aud = media.filter((m) => m.type === "audio").length, vid = media.filter((m) => m.type === "video").length;
-    if (aud) extra.push(`🎧 ${aud === 1 ? "vocale" : aud + " audio"} (parte da solo)`);
+    if (aud) extra.push(`🎧 ${aud === 1 ? "vocale" : aud + " audio"}${autoAudio(media) ? " (uno parte da solo)" : " (lei preme ▶)"}`.replace("vocale (uno parte", "vocale (parte"));
     if (vid) extra.push(`🎬 ${vid === 1 ? "video" : vid + " video"}`);
     if (extra.length) sheet.append(el("p", "pv-extra", extra.join("  ·  ")));
     if (d.link_url) sheet.append(el("span", "pv-link", d.link_label || "Apri il link ✨"));
+    if (d.allow_download !== false) sheet.append(el("span", "pv-save", "⬇ Salva la cartolina"));
     pv.append(sheet);
   }
 
@@ -521,7 +533,13 @@
       const path = `${cal.slug}/giorno-${current.day}/${Date.now()}-${safe}`;
       const { error } = await sb.storage.from("surprises").upload(path, file, { contentType: file.type || undefined });
       if (error) { status.textContent = `Errore con "${file.name}": ${error.message}`; return false; }
-      current.media.push({ path, type, name: file.name });
+      const item = { path, type, name: file.name };
+      if (type === "audio") {
+        const first = !current.media.some((m) => m.type === "audio");
+        if (!first) setAutoAudio(autoAudio()); // rende esplicita la scelta attuale
+        item.autoplay = first;
+      }
+      current.media.push(item);
       try { await saveRow(); } catch (err) { status.textContent = "File caricato ma non salvato: " + err.message; return false; }
       renderMedia(); updateDots();
       status.textContent = `Caricato: ${file.name} ✓`;
@@ -596,7 +614,7 @@
     const file = new File([recBlob], `vocale-${current.day}.${ext}`, { type: recBlob.type.split(";")[0] });
     const ok = await uploadFile(file);
     btn.disabled = false;
-    if (ok) { recReset(); $("upload-status").textContent = "Vocale salvato ✓ Parte da solo quando apre la casella."; }
+    if (ok) { recReset(); $("upload-status").textContent = `Vocale salvato ✓ ${autoAudio() && autoAudio().name === file.name ? "Parte da solo quando apre la casella." : "Lei lo ascolta premendo ▶ (puoi farlo partire da solo con l'interruttore)."}`; }
   });
   dlg.addEventListener("close", recReset);
   // tornando al calendario: rimetti la scheda Caselle visibile e ricarica l'elenco dal server
@@ -644,6 +662,20 @@
         const fn = document.createElement("small");
         fn.textContent = m.name;
         name.append(cap, fn);
+      }
+      if (m.type === "audio") {
+        const sw = el("label", "auto-sw");
+        const inp = document.createElement("input");
+        inp.type = "checkbox"; inp.checked = autoAudio() === m;
+        inp.addEventListener("change", async () => {
+          setAutoAudio(inp.checked ? m : null);
+          drawMedia(); renderPreview(false);
+          try { await saveRow(); setAuto("Salvato automaticamente ✓"); } catch (err) { $("save-error").textContent = "Non salvato: " + err.message; }
+        });
+        const knob = el("span", "switch");
+        knob.append(inp, el("span"));
+        sw.append(knob, el("small", "", "Parte da solo"));
+        name.append(sw);
       }
       const del = document.createElement("button");
       del.type = "button"; del.textContent = "Togli";

@@ -670,3 +670,20 @@ body::before {
 .wait-card strong { font-family: var(--serif); font-style: italic; font-size: 24px; font-weight: 600; color: var(--gold-soft); }
 .wait-card span { font-size: 17px; opacity: .85; }
 @keyframes waitIn { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+
+/* ---------- salva la cartolina ---------- */
+.save-card {
+  display: block; margin: 18px auto 0; padding: 11px 20px; border: 1.5px solid rgba(142, 27, 34, .35); border-radius: 999px;
+  background: rgba(255, 255, 255, .55); color: var(--wine); font-family: var(--serif); font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.save-ov { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 16px; background: rgba(6, 18, 12, .78); backdrop-filter: blur(4px); animation: fadeUp .25s ease-out both; }
+.save-box { position: relative; width: min(100%, 420px); max-height: calc(100dvh - 32px); overflow: auto; padding: 18px 16px 16px; border-radius: 18px; background: #fbf3e3; color: var(--ink); text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, .45); }
+.save-box h3 { margin: 0 34px 12px; font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--wine); }
+.save-x { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(59, 20, 22, .08); color: var(--ink); font-size: 22px; line-height: 1; cursor: pointer; }
+.save-status { margin: 40px 0; font-style: italic; }
+.save-img { display: block; width: 100%; max-height: 56dvh; object-fit: contain; border-radius: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, .25); -webkit-touch-callout: default; }
+.save-go { display: block; width: 100%; margin-top: 14px; padding: 13px 18px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #c9333a, #8e1b22); color: #fff; font-family: var(--serif); font-size: 17px; font-weight: 700; cursor: pointer; }
+.save-hint { margin: 8px 0 0; font-size: 14px; color: #8a6a6f; }
+.save-files { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(142, 27, 34, .3); }
+.save-files p { width: 100%; margin: 0; font-size: 14px; color: #8a6a6f; }
+.save-files a { padding: 7px 12px; border-radius: 999px; background: rgba(142, 27, 34, .08); color: var(--wine); font-size: 15px; text-decoration: none; }

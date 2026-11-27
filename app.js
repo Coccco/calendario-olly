@@ -393,9 +393,11 @@
   function stopVoice() { try { voice.pause(); } catch {} }
 
   // Mette il lettore audio del giorno nella sorpresa e, se il suono è attivo, lo fa partire.
-  function playDaySound(audioFile, box) {
+  function playDaySound(audioFile, box, silent = false) {
     stopVoice();
-    if (audioFile && audioFile.url) {
+    if (silent) {
+      voice.remove();
+    } else if (audioFile && audioFile.url) {
       voice.src = audioFile.url;
       box.prepend(voice);
       if (soundOn) voice.play().catch(() => {});
@@ -503,10 +505,10 @@
   }
 
   let currentDay = 0;
-  let soundBox = null, soundFile = null;
+  let soundBox = null, soundFile = null, soundSilent = false;
   function openSurprise(day) {
     currentDay = day;
-    soundBox = null; soundFile = null;
+    soundBox = null; soundFile = null; soundSilent = false;
     const d = state.days.get(day);
     const body = $("s-body");
     body.textContent = "";
@@ -538,7 +540,11 @@
         body.append(fig);
       });
       if (d.message) body.append(el("p", "message", d.message));
-      const firstAudio = media.find((f) => f.url && f.type === "audio");
+      // Audio che parte da solo: quello scelto nell'admin (autoplay); per i giorni vecchi senza scelta, il primo.
+      const audios = media.filter((f) => f.url && f.type === "audio");
+      const chosen = audios.some((f) => typeof f.autoplay === "boolean");
+      const firstAudio = chosen ? audios.find((f) => f.autoplay) : audios[0];
+      if (audios.length && !firstAudio) soundSilent = true; // ha degli audio ma nessuno parte da solo: niente campanellini
       const others = media.filter((f) => f.url && (f.type === "video" || f.type === "audio") && f !== firstAudio);
       const m = el("div", "media");
       if (firstAudio) { soundBox = m; soundFile = firstAudio; }
@@ -559,6 +565,12 @@
     }
     const phrase = day === 24 ? LAST() : day < state.unlocked ? PAST : NEXT[day % NEXT.length];
     body.append(el("p", "see-you", phrase));
+    if (hasContent && d.allow_download !== false) {
+      const b = el("button", "save-card", "⬇ Salva la cartolina");
+      b.type = "button";
+      b.addEventListener("click", () => saveCard(day));
+      body.append(b);
+    }
 
     // frecce: solo tra i giorni che può già aprire
     $("s-count").textContent = `${day} / 24`;
@@ -571,9 +583,65 @@
     sheetEl.classList.toggle("xmas", day === 24 && !!hasContent);
     lastOpened = day;
     if (!dlg.open) { dlg.showModal(); startSnow(); }
-    playDaySound(soundFile, soundBox);
+    playDaySound(soundFile, soundBox, soundSilent);
     dlg.scrollTop = 0;
     dlg.querySelector(".sheet").scrollTop = 0;
+  }
+
+  // ---------- salva la cartolina (immagine) e i file originali ----------
+  const slugName = (t) => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  async function saveCard(day) {
+    const d = state.days.get(day);
+    const dlg = $("surprise");
+    dlg.querySelector(".save-ov")?.remove();
+    const ov = el("div", "save-ov");
+    const box = el("div", "save-box");
+    const close = el("button", "save-x", "×"); close.type = "button"; close.setAttribute("aria-label", "Chiudi");
+    close.addEventListener("click", () => ov.remove());
+    const status = el("p", "save-status", "Preparo la cartolina…");
+    box.append(close, el("h3", "", "La tua cartolina ✨"), status);
+    ov.append(box);
+    dlg.append(ov);
+    const base = [slugName(names.her) || "cartolina", day, "dicembre"].join("-");
+    let blob;
+    try {
+      blob = await window.POSTCARD.make(day, d, { her: names.her, sign: names.sign });
+    } catch {
+      status.textContent = "Non sono riuscito a preparare la cartolina. Riprova tra poco.";
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const file = new File([blob], base + ".jpg", { type: "image/jpeg" });
+    const img = document.createElement("img");
+    img.className = "save-img"; img.src = url; img.alt = `Cartolina del ${day} dicembre`;
+    status.replaceWith(img);
+    const btn = el("button", "save-go", "");
+    btn.type = "button";
+    const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+    if (canShare && (isIOS || matchMedia("(pointer: coarse)").matches)) {
+      btn.textContent = isIOS ? "Salva nelle Foto" : "Salva o condividi";
+      btn.addEventListener("click", () => navigator.share({ files: [file] }).catch(() => {}));
+    } else {
+      btn.textContent = "⬇ Scarica la cartolina";
+      btn.addEventListener("click", () => { const a = document.createElement("a"); a.href = url; a.download = file.name; document.body.append(a); a.click(); a.remove(); });
+    }
+    box.append(btn);
+    if (isIOS) box.append(el("p", "save-hint", "Se non va, tieni premuto sull'immagine e scegli «Salva nelle Foto»."));
+    const files = ((d && d.media) || []).filter((f) => f.url && ["image", "video", "audio"].includes(f.type));
+    if (files.length) {
+      const ul = el("div", "save-files");
+      ul.append(el("p", "", "Anche i file originali:"));
+      files.forEach((f, i) => {
+        const ext = (f.name.split(".").pop() || "").toLowerCase().slice(0, 5);
+        const name = `${base}-${i + 1}${ext ? "." + ext : ""}`;
+        const n = files.slice(0, i + 1).filter((x) => x.type === f.type).length;
+        const a = el("a", "", (f.type === "image" ? "📷 Foto" : f.type === "video" ? "🎬 Video" : "🎧 Audio") + ` ${n}`);
+        a.href = f.url + (f.url.includes("?") ? "&" : "?") + "download=" + encodeURIComponent(name);
+        a.download = name; a.rel = "noopener";
+        ul.append(a);
+      });
+      box.append(ul);
+    }
   }
 
   // Buono: busta che si apre e biglietto con intestazione modificabile (vuota = nessuna intestazione)

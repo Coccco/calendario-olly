@@ -323,3 +323,12 @@ body:has(#panel:not([hidden])) { background: linear-gradient(#1a3a29 0, #e9dfcd 
   .ed-foot #clear-day span, .ed-foot .sp { display: none; }
   .ed-foot #ed-cancel { margin-left: auto; }
 }
+.auto-sw { display: flex; align-items: center; gap: 8px; margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.auto-sw .switch { width: 40px; height: 24px; }
+.auto-sw .switch span::after { width: 18px; height: 18px; }
+.auto-sw .switch input:checked + span::after { transform: translateX(16px); }
+.dl-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.dl-row span { display: grid; gap: 2px; font-size: 15px; }
+.dl-row small { color: var(--muted); font-size: 13px; }
+.dl-row .switch { flex: none; }
+.pv-save { display: block; width: max-content; margin: 12px auto 0; padding: 6px 14px; border: 1.5px solid rgba(142, 27, 34, .35); border-radius: 999px; font-size: 13px; color: var(--wine); }

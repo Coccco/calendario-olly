@@ -200,7 +200,7 @@
   // ---------- schede e viste ----------
   function showTab(name) {
     document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
-    document.querySelectorAll(".pane").forEach((p) => (p.hidden = p.dataset.pane !== name));
+    document.querySelectorAll("#panel .pane").forEach((p) => (p.hidden = p.dataset.pane !== name));
     $("view-switch").hidden = name !== "caselle";
   }
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));
@@ -413,11 +413,11 @@
   };
   function showPane(name, play = true) {
     pane = name;
-    document.querySelectorAll(".ed-tab").forEach((t) => {
+    dlg.querySelectorAll(".ed-tab").forEach((t) => {
       t.classList.toggle("on", t.dataset.pane === name);
       t.setAttribute("aria-selected", t.dataset.pane === name);
     });
-    document.querySelectorAll(".pane").forEach((p) => (p.hidden = !p.dataset.pane.split(" ").includes(name)));
+    dlg.querySelectorAll(".ed-pane").forEach((p) => (p.hidden = !p.dataset.pane.split(" ").includes(name)));
     const a = ATTACH[name];
     if (a) {
       $("file").accept = a[0];
@@ -599,6 +599,12 @@
     if (ok) { recReset(); $("upload-status").textContent = "Vocale salvato ✓ Parte da solo quando apre la casella."; }
   });
   dlg.addEventListener("close", recReset);
+  // tornando al calendario: rimetti la scheda Caselle visibile e ricarica l'elenco dal server
+  dlg.addEventListener("close", () => {
+    if (!document.querySelector("#panel .pane:not([hidden])")) showTab("caselle");
+    renderDays();
+    loadDays().catch(() => {});
+  });
 
   async function renderMedia(play = false) {
     const day = current.day;

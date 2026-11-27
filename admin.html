@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261128g">
-  <link rel="stylesheet" href="voucher.css?v=20261128g">
+  <link rel="stylesheet" href="admin.css?v=20261128h">
+  <link rel="stylesheet" href="voucher.css?v=20261128h">
 </head>
 <body>
   <!-- Login -->
@@ -195,14 +195,14 @@
             <button type="button" class="ed-tab" data-pane="voucher" role="tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10"/></svg><span>Buono</span><i class="dot"></i></button>
           </div>
 
-          <div class="pane" data-pane="msg">
+          <div class="ed-pane" data-pane="msg">
             <label>Titolo <input id="f-title" maxlength="120" placeholder="Es. Il nostro primo appuntamento"></label>
             <label>Messaggio
               <span class="ta-wrap"><textarea id="f-message" rows="6" maxlength="1000" placeholder="Scrivile qualcosa…"></textarea><small class="count" id="f-count">0 / 1000</small></span>
             </label>
           </div>
 
-          <div class="pane attach" data-pane="image video audio">
+          <div class="ed-pane attach" data-pane="image video audio">
             <p class="pane-hint" id="attach-hint"></p>
             <ul class="media-list" id="media-list"></ul>
             <p class="none muted small" id="attach-none" hidden></p>
@@ -228,13 +228,13 @@
             <p class="muted small" id="upload-status"></p>
           </div>
 
-          <div class="pane" data-pane="link">
+          <div class="ed-pane" data-pane="link">
             <p class="pane-hint">Una playlist, un video, un posto su Maps… Lei vede un bottone con il testo che scrivi: toccandolo si apre il link.</p>
             <label>Link <input id="f-link" type="url" placeholder="https://…"></label>
             <label>Testo del bottone <input id="f-link-label" maxlength="60" placeholder="Ascolta la playlist 🎶"></label>
           </div>
 
-          <div class="pane" data-pane="voucher">
+          <div class="ed-pane" data-pane="voucher">
             <p class="pane-hint">Per i regali da riscattare dal vivo. Lei vede un biglietto che esce da una busta.</p>
             <label>Cosa vale <input id="f-voucher" maxlength="60" placeholder="Es. una cena da me"></label>
             <label>Scritta in alto <input id="f-voucher-label" maxlength="30" placeholder="Nessuna scritta"></label>
@@ -281,8 +281,8 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="config.js?v=20261128g"></script>
-  <script src="decor.js?v=20261128g"></script>
-  <script src="admin.js?v=20261128g"></script>
+  <script src="config.js?v=20261128h"></script>
+  <script src="decor.js?v=20261128h"></script>
+  <script src="admin.js?v=20261128h"></script>
 </body>
 </html>

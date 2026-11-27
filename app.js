@@ -2,7 +2,14 @@
   const C = window.CONFIG;
   const $ = (id) => document.getElementById(id);
   // Ogni coppia ha il suo calendario: ?c=nome. Senza parametro è quello di Olly.
-  const SLUG = (new URLSearchParams(location.search).get("c") || "olly").trim().toLowerCase();
+  const SLUG = (new URLSearchParams(location.search).get("c") || (C.DEFAULT_SLUG ?? "olly")).trim().toLowerCase();
+  if (!SLUG) {
+    // Sito senza calendario predefinito: serve il link personale.
+    document.querySelector("#intro .intro-title").innerHTML = "Ti serve<br><em>il tuo link</em>";
+    document.querySelector("#intro .kicker").textContent = "Calendario dell'avvento";
+    for (const id of ["gift", "gift-hint", "code-form"]) document.getElementById(id).hidden = true;
+    return;
+  }
   const IS_DEFAULT = SLUG === "olly";
   const CODE_KEY = IS_DEFAULT ? "avvento-codice" : `avvento-codice-${SLUG}`;
   const SEEN_KEY = IS_DEFAULT ? "avvento-visti" : `avvento-visti-${SLUG}`;

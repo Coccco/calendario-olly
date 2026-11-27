@@ -674,3 +674,19 @@ body::before {
 .notify-note:empty { display: none; }
 .day-nav button.sound { font-size: 18px; font-style: normal; }
 .day-nav { gap: 24px; }
+
+/* --- prima del 1° dicembre: caselle sfocate e lucchetto --- */
+.grid.waiting .tile { filter: blur(3.5px) saturate(.8) brightness(.85); }
+.grid.waiting .tile.big { filter: blur(3.5px) saturate(.9); }
+.wait-lock { position: sticky; top: 34vh; height: 0; z-index: 6; display: flex; align-items: flex-start; justify-content: center; pointer-events: none; }
+.wait-card {
+  display: grid; justify-items: center; gap: 4px; padding: 20px 28px 18px;
+  background: rgba(16, 38, 27, .82); border: 1.5px solid rgba(241, 217, 164, .6); border-radius: 22px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .45); color: var(--cream); text-align: center;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  animation: waitIn .6s ease-out both;
+}
+.wait-card svg { width: 46px; height: 46px; fill: none; stroke: var(--gold-soft); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 4px; }
+.wait-card strong { font-family: var(--serif); font-style: italic; font-size: 24px; font-weight: 600; color: var(--gold-soft); }
+.wait-card span { font-size: 17px; opacity: .85; }
+@keyframes waitIn { from { opacity: 0; transform: translateY(10px) scale(.96); } }

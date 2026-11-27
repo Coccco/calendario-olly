@@ -1,6 +1,7 @@
 {
   "name": "Per Olly",
   "short_name": "Per Olly",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -331,7 +331,7 @@
       lock = el("div", "wait-lock"); lock.id = "wait-lock";
       const card = el("div", "wait-card");
       card.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.2" r="1.3"/></svg>';
-      card.append(el("strong", "", "Si apre il 1° dicembre"), el("span", "", "Niente sbirciatine 🤫"));
+      card.append(el("strong", "", "Si apre il 1° dicembre"), el("span", "", "24 piccole sorprese ti aspettano ✨"));
       lock.append(card);
       grid.before(lock);
     } else if (unlocked > 0 && lock) lock.remove();

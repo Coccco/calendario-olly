@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261128e">
+  <link rel="stylesheet" href="admin.css?v=20261128f">
 </head>
 <body>
   <!-- Login -->
@@ -52,45 +52,114 @@
   </main>
 
   <!-- Pannello -->
-  <main id="panel" class="wrap" hidden>
-    <header class="top">
-      <div>
-        <h1 id="panel-title">Le sorprese</h1>
-        <p class="muted" id="today-line"></p>
+  <main id="panel" hidden>
+    <header class="hero">
+      <div class="branch left" aria-hidden="true"></div>
+      <div class="branch right" aria-hidden="true"></div>
+      <div class="hero-in">
+        <h1><span id="panel-title">Le sorprese</span> <span class="hero-heart">♡</span></h1>
+        <p>Gestisci il tuo Calendario dell'Avvento</p>
       </div>
-      <button id="logout" class="ghost" type="button">Esci</button>
+      <button id="logout" class="hero-out" type="button">Esci <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg></button>
     </header>
 
-    <section class="card preview">
-      <strong>Anteprima</strong>
-      <span class="muted">Guarda il calendario come lo vedrà lei in una data a scelta.</span>
-      <div class="row">
-        <input type="date" id="preview-date" value="2026-12-01" min="2026-11-25" max="2026-12-26">
-        <button id="preview-btn" class="primary" type="button">Apri anteprima</button>
-      </div>
-    </section>
+    <div class="wrap">
+      <section class="card stats" aria-label="Riepilogo">
+        <div class="stat"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg><div><span>Inizia il</span><b>1 dicembre 2026</b></div></div>
+        <div class="stat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7C10 3 6 3.5 7 6c.5 1 3 1 5 1 2 0 4.5 0 5-1 1-2.5-3-3-5 1z"/></svg><div><b>24</b><span>sorprese totali</span></div></div>
+        <div class="stat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg><div><b id="st-ready">0</b><span>sorprese pronte</span></div></div>
+        <div class="stat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg><div><b id="st-todo">24</b><span>da completare</span></div></div>
+        <button class="primary stat-btn" id="preview-quick" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg> Anteprima calendario</button>
+      </section>
 
-    <details class="card settings" id="settings">
-      <summary><strong>Il tuo calendario</strong> <span class="muted">nomi, parola segreta e link</span></summary>
-      <form id="settings-form">
-        <div class="two">
-          <label>Nome di lei <input id="s-her" maxlength="40" required placeholder="Es. Giulia"></label>
-          <label>La tua firma <input id="s-sign" maxlength="40" placeholder="Es. Marco"></label>
+      <section class="card progress">
+        <div class="pr-top">
+          <div><b>Calendario completato al <span id="pr-pct">0%</span></b><span class="muted" id="pr-line"></span></div>
+          <button class="ghost pr-btn" id="continue" type="button">Continua a creare le sorprese →</button>
         </div>
-        <label>Frase sotto il nome <input id="s-intro" maxlength="140"></label>
-        <label>Parola segreta per lei <input id="s-code" maxlength="60" autocomplete="off" placeholder=""></label>
-        <p class="muted small" id="s-code-hint" style="margin:-8px 0 14px">Maiuscole e spazi non contano. Scegli qualcosa che sa solo lei.</p>
-        <label>Il link da mandarle
-          <div class="row"><input id="s-link" readonly><button type="button" class="ghost" id="s-copy">Copia</button></div>
-        </label>
-        <p class="muted small" id="s-notify-line">Notifiche: …</p>
-        <div class="row" style="margin-bottom:14px"><button type="button" class="ghost" id="s-test">🔔 Manda una notifica di prova (arriva a tutti i telefoni iscritti)</button></div>
-        <button class="primary" type="submit" id="s-save">Salva</button>
+        <div class="bar"><i id="pr-bar"></i></div>
+        <p class="muted small" id="today-line"></p>
+      </section>
+
+      <div class="duo">
+        <section class="card mini">
+          <span class="deco-bow" data-bow aria-hidden="true"></span>
+          <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/></svg> Anteprima</h2>
+          <p class="muted">Guarda il calendario come lo vedrà <span class="her-name">lei</span>.</p>
+          <div class="row">
+            <input type="date" id="preview-date" value="2026-12-01" min="2026-11-25" max="2026-12-26">
+            <button id="preview-btn" class="primary" type="button">Apri anteprima</button>
+          </div>
+        </section>
+        <section class="card mini">
+          <span class="deco-env" aria-hidden="true">💌</span>
+          <h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg> Il tuo calendario</h2>
+          <p class="muted">Gestisci i dettagli principali.</p>
+          <div class="quick">
+            <button type="button" class="ghost" id="go-name">✎ Modifica nome</button>
+            <button type="button" class="ghost" id="go-code">🔒 Parola segreta</button>
+            <button type="button" class="ghost" id="s-copy">🔗 Copia link</button>
+          </div>
+        </section>
+      </div>
+
+      <nav class="tabs" role="tablist">
+        <div class="tab-list">
+          <button type="button" class="tab active" data-tab="caselle">🎁 Caselle (1–24)</button>
+          <button type="button" class="tab" data-tab="notifiche">🔔 Notifiche</button>
+          <button type="button" class="tab" data-tab="grafica">🖌 Grafica</button>
+          <button type="button" class="tab" data-tab="impostazioni">⚙ Impostazioni</button>
+        </div>
+        <div class="view" id="view-switch">
+          <span>Vista:</span>
+          <button type="button" class="active" data-view="grid">▦ Griglia</button>
+          <button type="button" data-view="list">☰ Lista</button>
+        </div>
+      </nav>
+
+      <section class="pane" data-pane="caselle">
+        <div class="days" id="days"></div>
+        <div class="list" id="days-list" hidden></div>
+      </section>
+
+      <section class="pane" data-pane="notifiche" hidden>
+        <div class="card">
+          <h2>Notifiche</h2>
+          <p class="muted" id="s-notify-line">Notifiche: …</p>
+          <div class="row" style="margin-bottom:6px"><button type="button" class="ghost" id="s-test">🔔 Manda una notifica di prova (arriva a tutti i telefoni iscritti)</button></div>
+          <p class="muted small">I testi si cambiano dentro ogni casella. Tocca un giorno qui sotto per modificarlo.</p>
+          <div class="list" id="notify-list"></div>
+        </div>
+      </section>
+
+      <form id="settings-form">
+        <section class="pane" data-pane="grafica" hidden>
+          <div class="card">
+            <h2>Come la vede <span class="her-name">lei</span></h2>
+            <p class="muted small">Sono i nomi e la frase in cima al suo calendario.</p>
+            <div class="two">
+              <label>Nome di lei <input id="s-her" maxlength="40" placeholder="Es. Giulia"></label>
+              <label>La tua firma <input id="s-sign" maxlength="40" placeholder="Es. Marco"></label>
+            </div>
+            <label>Frase sotto il nome <input id="s-intro" maxlength="140"></label>
+            <div class="peek" aria-hidden="true"><small>Per</small><strong id="peek-her">lei</strong><span id="peek-intro"></span><em id="peek-sign"></em></div>
+            <button class="primary s-save" type="submit">Salva</button>
+          </div>
+        </section>
+        <section class="pane" data-pane="impostazioni" hidden>
+          <div class="card">
+            <h2>Impostazioni</h2>
+            <label>Parola segreta per lei <input id="s-code" maxlength="60" autocomplete="off" placeholder=""></label>
+            <p class="muted small" id="s-code-hint" style="margin:-8px 0 14px">Maiuscole e spazi non contano. Scegli qualcosa che sa solo lei.</p>
+            <label>Il link da mandarle
+              <div class="row"><input id="s-link" readonly><button type="button" class="ghost" id="s-copy2">Copia</button></div>
+            </label>
+            <button class="primary s-save" type="submit">Salva</button>
+          </div>
+        </section>
         <p class="error" id="s-error" role="alert"></p>
       </form>
-    </details>
-
-    <section class="days" id="days"></section>
+    </div>
   </main>
 
   <!-- Modifica di un giorno -->
@@ -156,7 +225,8 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="config.js?v=20261128e"></script>
-  <script src="admin.js?v=20261128e"></script>
+  <script src="config.js?v=20261128f"></script>
+  <script src="decor.js?v=20261128f"></script>
+  <script src="admin.js?v=20261128f"></script>
 </body>
 </html>

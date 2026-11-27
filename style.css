@@ -672,3 +672,5 @@ body::before {
 .notify-btn:disabled { opacity: .6; }
 .notify-note { margin: 8px 0 0; font-size: 15px; font-style: italic; color: var(--gold-soft); opacity: .9; }
 .notify-note:empty { display: none; }
+.day-nav button.sound { font-size: 18px; font-style: normal; }
+.day-nav { gap: 24px; }

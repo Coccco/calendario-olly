@@ -391,18 +391,101 @@
   }
 
   function stopVoice() { try { voice.pause(); } catch {} }
+  function detachVoice() { const w = voice.parentElement; if (w && w.classList.contains("aplayer")) w.remove(); else voice.remove(); }
+
+  // ---------- lettore audio con onda (al posto dei controlli del browser) ----------
+  const ICO = {
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>',
+    spotify: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M6.5 9.2c3.8-1.1 8-.8 11.2 1M7.2 12.4c3.1-.9 6.4-.6 9.1.9M7.9 15.4c2.4-.6 4.9-.4 7 .7" fill="none" stroke="#fbf3e3" stroke-width="1.7" stroke-linecap="round"/></svg>',
+    youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="5" width="21" height="14" rx="4" fill="currentColor"/><path d="M10 9v6l5-3z" fill="#fbf3e3"/></svg>',
+    maps: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.4 7-12a7 7 0 0 0-14 0c0 5.6 7 12 7 12z" fill="currentColor"/><circle cx="12" cy="10" r="2.6" fill="#fbf3e3"/></svg>',
+    link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    out: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M17 14v5H5V7h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  const fmtTime = (t) => (isFinite(t) && t > 0 ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}` : "0:00");
+  function player(a, seed = "") {
+    a.controls = false;
+    const wrap = el("div", "aplayer");
+    const btn = el("button", "ap-play"); btn.type = "button"; btn.setAttribute("aria-label", "Ascolta");
+    const wave = el("div", "ap-wave");
+    const time = el("span", "ap-time", "0:00");
+    let h = 7; for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const N = 38, bars = [];
+    let prev = 0.5;
+    for (let i = 0; i < N; i++) {
+      h = (h * 1103515245 + 12345) >>> 0;
+      prev = Math.min(1, Math.max(0.18, prev * 0.45 + ((h >>> 8) % 1000) / 1000 * 0.75));
+      const b = el("i"); b.style.height = Math.round(prev * 100) + "%"; bars.push(b); wave.append(b);
+    }
+    wrap.append(btn, wave, time, a);
+    if (a._ac) a._ac.abort();
+    const ac = new AbortController(); a._ac = ac;
+    const upd = () => {
+      const p = a.duration && isFinite(a.duration) ? a.currentTime / a.duration : 0;
+      bars.forEach((b, i) => b.classList.toggle("on", i / N < p));
+      time.textContent = a.duration && isFinite(a.duration) ? `${fmtTime(a.currentTime)} / ${fmtTime(a.duration)}` : fmtTime(a.currentTime);
+      btn.innerHTML = a.paused ? ICO.play : ICO.pause;
+      wrap.classList.toggle("playing", !a.paused);
+    };
+    for (const e of ["timeupdate", "loadedmetadata", "durationchange", "play", "pause", "ended"]) a.addEventListener(e, upd, { signal: ac.signal });
+    btn.addEventListener("click", () => {
+      unlockAudio();
+      if (a.paused) { document.querySelectorAll("#s-body audio").forEach((x) => x !== a && x.pause()); a.play().catch(() => {}); } else a.pause();
+    });
+    wave.addEventListener("click", (e) => {
+      if (!a.duration || !isFinite(a.duration)) return;
+      const r = wave.getBoundingClientRect();
+      a.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * a.duration;
+    });
+    upd();
+    return wrap;
+  }
+
+  // ---------- link con anteprima (copertina e titolo presi dall'admin) ----------
+  function linkCard(d, info) {
+    const url = d.link_url;
+    let host = "", path = "";
+    try { const u = new URL(url); host = u.hostname.replace(/^www\./, ""); path = u.pathname; } catch {}
+    const kind = /spotify\./.test(host) ? "spotify" : /youtu\.?be/.test(host) ? "youtube"
+      : /maps/.test(host + path) ? "maps" : "link";
+    const media = kind === "spotify" || kind === "youtube" || /vimeo|soundcloud/.test(host);
+    const a = el("a", "lcard " + kind + (info && info.image ? " big" : ""));
+    a.href = url; a.target = "_blank"; a.rel = "noopener";
+    const prov = (info && info.provider) || { spotify: "Spotify", youtube: "YouTube", maps: "Mappa" }[kind] || host;
+    const title = d.link_label || (info && info.title) || "Apri il link ✨";
+    const sub = d.link_label && info && info.title && info.title !== d.link_label ? info.title : "";
+    if (info && info.image) {
+      const cov = el("span", "lc-cover");
+      const img = document.createElement("img");
+      img.src = info.image; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
+      img.onerror = () => { a.classList.remove("big"); cov.remove(); };
+      cov.append(img);
+      a.append(cov);
+    }
+    const row = el("span", "lc-row");
+    const icon = el("span", "lc-icon"); icon.innerHTML = ICO[kind] || ICO.link;
+    const text = el("span", "lc-text");
+    text.append(el("small", "", prov));
+    text.append(el("strong", "", title));
+    if (sub) text.append(el("span", "lc-sub", sub));
+    const go = el("span", "lc-go"); go.innerHTML = media ? ICO.play : ICO.out;
+    row.append(icon, text, go);
+    a.append(row);
+    return a;
+  }
 
   // Mette il lettore audio del giorno nella sorpresa e, se il suono è attivo, lo fa partire.
   function playDaySound(audioFile, box, silent = false) {
     stopVoice();
     if (silent) {
-      voice.remove();
+      detachVoice();
     } else if (audioFile && audioFile.url) {
       voice.src = audioFile.url;
-      box.prepend(voice);
+      box.prepend(player(voice, audioFile.name || audioFile.url));
       if (soundOn) voice.play().catch(() => {});
     } else {
-      voice.remove();
+      detachVoice();
       chime();
     }
   }
@@ -412,6 +495,7 @@
     b.textContent = soundOn ? "🔊" : "🔇";
     b.setAttribute("aria-label", soundOn ? "Togli il suono" : "Metti il suono");
   }
+  $("s-save").addEventListener("click", () => saveCard(currentDay));
   $("s-sound").addEventListener("click", () => {
     soundOn = !soundOn;
     store.set(SOUND_KEY, soundOn ? "on" : "off");
@@ -552,25 +636,18 @@
         for (const f of others) {
           const node = document.createElement(f.type);
           node.controls = true; node.preload = "metadata"; node.src = f.url;
-          if (f.type === "video") node.playsInline = true;
-          m.append(node);
+          if (f.type === "video") { node.playsInline = true; m.append(node); }
+          else m.append(player(node, f.name || f.url));
         }
         body.append(m);
       }
       if (/^https?:\/\//i.test(d.link_url || "")) {
-        const a = el("a", "link-btn", d.link_label || "Apri il link ✨");
-        a.href = d.link_url; a.target = "_blank"; a.rel = "noopener";
-        body.append(a);
+        body.append(linkCard(d, media.find((f) => f.type === "link")));
       }
     }
     const phrase = day === 24 ? LAST() : day < state.unlocked ? PAST : NEXT[day % NEXT.length];
     body.append(el("p", "see-you", phrase));
-    if (hasContent && d.allow_download !== false) {
-      const b = el("button", "save-card", "⬇ Salva la cartolina");
-      b.type = "button";
-      b.addEventListener("click", () => saveCard(day));
-      body.append(b);
-    }
+    $("s-save").hidden = !(hasContent && d.allow_download !== false);
 
     // frecce: solo tra i giorni che può già aprire
     $("s-count").textContent = `${day} / 24`;

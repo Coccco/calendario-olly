@@ -107,37 +107,43 @@ window.POSTCARD = (() => {
       // fiocco
       if (bow) { if (draw) ctx.drawImage(bow, W / 2 - 120, y - 40, 240, 160); y += 140; } else y += 20;
 
-      // buono
+      // buono: cornice rossa, biglietto panna, sigillo di ceralacca
       if (voucher) {
-        const bx = PAD + 70, bw = CW - 140, th = 300;
+        const bw = CW - 160, th = 320, cy = y + th / 2 + 30;
         if (draw) {
-          // busta
-          ctx.save(); ctx.shadowColor = "rgba(40,0,6,.35)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
-          ctx.fillStyle = "#8f141b"; rr(ctx, bx - 20, y + 130, bw + 40, 260, 14); ctx.fill(); ctx.restore();
-          // biglietto
-          ctx.save(); ctx.translate(W / 2, y + th / 2 + 20); ctx.rotate(-0.025);
-          ctx.shadowColor = "rgba(60,10,14,.3)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
-          ctx.fillStyle = CREAM; rr(ctx, -bw / 2, -th / 2, bw, th, 10); ctx.fill(); ctx.shadowColor = "transparent";
-          ctx.fillStyle = "#8f141b"; for (const sx of [-bw / 2, bw / 2]) { ctx.beginPath(); ctx.arc(sx, 0, 20, 0, Math.PI * 2); ctx.fill(); }
-          ctx.setLineDash([8, 8]); ctx.strokeStyle = "rgba(142,27,34,.35)"; ctx.lineWidth = 3;
-          ctx.strokeRect(-bw / 2 + 26, -th / 2 + 18, bw - 160, th - 36);
-          ctx.beginPath(); ctx.moveTo(bw / 2 - 110, -th / 2 + 10); ctx.lineTo(bw / 2 - 110, th / 2 - 10); ctx.stroke(); ctx.setLineDash([]);
-          const mid = -55;
-          const label = typeof voucher.label === "string" ? voucher.label.trim() : "Un regalo per te";
-          ctx.fillStyle = "#a6464b"; ctx.font = `700 24px ${SERIF}`;
-          if (label) spaced(ctx, "✦ " + label.toUpperCase() + " ✦", mid, -th / 2 + 70, 5);
-          ctx.fillStyle = "#8e1b22"; ctx.font = `600 64px ${HAND}`;
-          const vl = lines(ctx, voucher.caption || "una sorpresa", bw - 220).slice(0, 3);
-          vl.forEach((l, i) => ctx.fillText(l, mid, -th / 2 + (label ? 140 : 110) + i * 64 + (3 - vl.length) * 18));
-          ctx.fillStyle = "#a6464b"; ctx.font = `700 22px ${SERIF}`; ctx.fillText("N°", bw / 2 - 55, -30);
-          ctx.fillStyle = "#8e1b22"; ctx.font = `italic 700 44px ${SERIF}`; ctx.fillText(String(day).padStart(2, "0"), bw / 2 - 55, 22);
+          ctx.save(); ctx.translate(W / 2, cy); ctx.rotate(-0.028);
+          ctx.shadowColor = "rgba(50,5,10,.4)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+          const mg = ctx.createRadialGradient(-bw / 3, -th / 3, 20, 0, 0, bw);
+          mg.addColorStop(0, "#a61c24"); mg.addColorStop(1, "#5e0a10");
+          ctx.fillStyle = mg; rr(ctx, -bw / 2 - 30, -th / 2 - 30, bw + 60, th + 60, 18); ctx.fill(); ctx.shadowColor = "transparent";
+          ctx.setLineDash([10, 8]); ctx.strokeStyle = "rgba(255,214,196,.4)"; ctx.lineWidth = 3;
+          rr(ctx, -bw / 2 - 18, -th / 2 - 18, bw + 36, th + 36, 12); ctx.stroke(); ctx.setLineDash([]);
           ctx.restore();
-          // tasca davanti
-          ctx.fillStyle = "#a3191f";
-          ctx.beginPath(); ctx.moveTo(bx - 20, y + 300); ctx.lineTo(W / 2, y + 360); ctx.lineTo(bx + bw + 20, y + 300);
-          ctx.lineTo(bx + bw + 20, y + 390); ctx.lineTo(bx - 20, y + 390); ctx.closePath(); ctx.fill();
+          ctx.save(); ctx.translate(W / 2, cy); ctx.rotate(0.014);
+          ctx.shadowColor = "rgba(50,5,10,.35)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 6;
+          ctx.fillStyle = CREAM; rr(ctx, -bw / 2, -th / 2, bw, th, 10); ctx.fill(); ctx.shadowColor = "transparent";
+          ctx.fillStyle = "#7d1219"; for (const sx of [-bw / 2, bw / 2]) { ctx.beginPath(); ctx.arc(sx, 0, 24, 0, Math.PI * 2); ctx.fill(); }
+          ctx.setLineDash([8, 8]); ctx.strokeStyle = "rgba(142,27,34,.35)"; ctx.lineWidth = 3;
+          ctx.strokeRect(-bw / 2 + 40, -th / 2 + 18, bw - 80, th - 36); ctx.setLineDash([]);
+          const label = typeof voucher.label === "string" ? voucher.label.trim() : "Un regalo per te";
+          ctx.fillStyle = "#7c1622"; ctx.font = `700 26px ${SERIF}`;
+          if (label) spaced(ctx, label.toUpperCase(), 0, -th / 2 + 72, 6);
+          ctx.font = `600 66px ${HAND}`;
+          const vl = lines(ctx, voucher.caption || "una sorpresa", bw - 140).slice(0, 3);
+          const top = -th / 2 + (label ? 142 : 112) + (3 - vl.length) * 22;
+          vl.forEach((l, i) => ctx.fillText(l, 0, top + i * 66));
+          ctx.font = `400 40px ${BODY}`; ctx.fillStyle = "#a3222b"; ctx.fillText("♡", 0, th / 2 - 30);
+          ctx.restore();
+          // sigillo
+          const sx = W / 2 + bw / 2 + 4, sy = cy + th / 2 + 10;
+          ctx.save(); ctx.shadowColor = "rgba(40,0,6,.45)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
+          const sg = ctx.createRadialGradient(sx - 18, sy - 20, 6, sx, sy, 70);
+          sg.addColorStop(0, "#cf3a42"); sg.addColorStop(.6, "#8e141c"); sg.addColorStop(1, "#5e0a10");
+          ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(sx, sy, 64, 60, -0.3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+          ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sx, sy, 44, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = "#6e0a12"; ctx.font = `400 50px ${BODY}`; ctx.fillText("♥", sx, sy + 17);
         }
-        y += 440;
+        y += th + 120;
       }
 
       // polaroid

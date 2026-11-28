@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=EB+Garamond:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261128j">
-  <link rel="stylesheet" href="voucher.css?v=20261128j">
+  <link rel="stylesheet" href="admin.css?v=20261128k">
+  <link rel="stylesheet" href="voucher.css?v=20261128k">
 </head>
 <body>
   <!-- Login -->
@@ -228,10 +228,6 @@
             <p class="muted small" id="upload-status"></p>
           </div>
 
-          <div class="dl-row">
-            <span><strong>Lei può salvare la cartolina</strong><small>Un tasto nella sorpresa crea un'immagine con testo, foto e buono, più i file originali.</small></span>
-            <label class="switch"><input type="checkbox" id="f-download" checked><span></span></label>
-          </div>
 
           <div class="ed-pane" data-pane="link">
             <p class="pane-hint">Una playlist, un video, un posto su Maps… Lei vede un bottone con il testo che scrivi: toccandolo si apre il link.</p>
@@ -240,7 +236,7 @@
           </div>
 
           <div class="ed-pane" data-pane="voucher">
-            <p class="pane-hint">Per i regali da riscattare dal vivo. Lei vede un biglietto che esce da una busta.</p>
+            <p class="pane-hint">Per i regali da riscattare dal vivo. Lei vede un biglietto con una cornice rossa e un sigillo di ceralacca.</p>
             <label>Cosa vale <input id="f-voucher" maxlength="60" placeholder="Es. una cena da me"></label>
             <label>Scritta in alto <input id="f-voucher-label" maxlength="30" placeholder="Nessuna scritta"></label>
             <div class="chips" id="label-chips">
@@ -249,6 +245,11 @@
               <button type="button" data-v="Solo per te">Solo per te</button>
               <button type="button" data-v="">Nessuna</button>
             </div>
+          </div>
+
+          <div class="dl-row">
+            <span><strong>Lei può salvare la cartolina</strong><small>Un tasto nella sorpresa crea un'immagine con testo, foto e buono, più i file originali.</small></span>
+            <label class="switch"><input type="checkbox" id="f-download" checked><span></span></label>
           </div>
         </section>
 
@@ -286,8 +287,8 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="config.js?v=20261128j"></script>
-  <script src="decor.js?v=20261128j"></script>
-  <script src="admin.js?v=20261128j"></script>
+  <script src="config.js?v=20261128k"></script>
+  <script src="decor.js?v=20261128k"></script>
+  <script src="admin.js?v=20261128k"></script>
 </body>
 </html>

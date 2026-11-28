@@ -338,3 +338,4 @@ body:has(#panel:not([hidden])) { background: linear-gradient(#1a3a29 0, #e9dfcd 
 .pv-lt small { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #a6464b; }
 .pv-lt b { font-size: 15px; color: #5a1019; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pv-lcard i { position: absolute; right: 10px; bottom: 9px; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #8e1b22; color: #fff; font-style: normal; font-size: 12px; }
+.pv-note { margin: 6px 6px 0; font-size: 12px; color: #9a5b00; text-align: left; }

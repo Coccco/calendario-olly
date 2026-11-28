@@ -75,6 +75,9 @@ window.POSTCARD = (() => {
       try { img = f.type === "image" ? await photo(f.url) : await videoFrame(f.url); } catch { img = null; }
       pics.push({ img, type: f.type, caption: f.caption || "" });
     }
+    const li = media.find((f) => f.type === "link");
+    let linkImg = null;
+    if (d && d.link_url && li && li.image) { try { linkImg = await photo(li.image); } catch { linkImg = null; } }
     let bow = null;
     if (window.DECOR) {
       const svg = DECOR.bow().replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" ');
@@ -167,11 +170,37 @@ window.POSTCARD = (() => {
       // audio e link
       const extra = [];
       if (audios) extra.push(audios === 1 ? "🎧 con un vocale" : `🎧 con ${audios} audio`);
-      if (d && d.link_url) extra.push("🔗 " + (d.link_label || "e un link"));
+
       if (extra.length) {
         y += 20; ctx.font = `italic 400 34px ${BODY}`; ctx.fillStyle = "#8a6a6f";
         if (draw) ctx.fillText(extra.join("   ·   "), W / 2, y);
         y += 40;
+      }
+      // link (playlist, video…) come cartoncino con copertina
+      if (d && d.link_url) {
+        const lw = 760, ih = linkImg ? Math.round(lw * (/spotify/.test(d.link_url) ? 0.62 : 0.5625)) : 0, lh = ih + 130;
+        y += 30;
+        if (draw) {
+          const lx = W / 2 - lw / 2;
+          ctx.save(); ctx.shadowColor = "rgba(90,30,20,.25)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
+          ctx.fillStyle = "#fffaf0"; rr(ctx, lx, y, lw, lh, 26); ctx.fill(); ctx.restore();
+          ctx.save(); rr(ctx, lx, y, lw, lh, 26); ctx.clip();
+          if (linkImg) cover(ctx, linkImg, lx, y, lw, ih);
+          ctx.restore();
+          ctx.textAlign = "left";
+          ctx.fillStyle = "#a6464b"; ctx.font = `700 22px ${SERIF}`;
+          ctx.fillText(((li && li.provider) || "Link").toUpperCase(), lx + 34, y + ih + 50);
+          ctx.fillStyle = "#5a1019"; ctx.font = `700 36px ${SERIF}`;
+          let t = d.link_label || (li && li.title) || "Apri il link";
+          while (ctx.measureText(t).width > lw - 170 && t.length > 4) t = t.slice(0, -2);
+          if (t !== (d.link_label || (li && li.title) || "Apri il link")) t += "…";
+          ctx.fillText(t, lx + 34, y + ih + 96);
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#8e1b22"; ctx.beginPath(); ctx.arc(lx + lw - 70, y + ih + 65, 36, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#fff6ea"; ctx.beginPath(); const cx = lx + lw - 70, cy = y + ih + 65;
+          ctx.moveTo(cx - 10, cy - 16); ctx.lineTo(cx + 16, cy); ctx.lineTo(cx - 10, cy + 16); ctx.fill();
+        }
+        y += lh + 20;
       }
       // firma
       y += 50;

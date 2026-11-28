@@ -149,7 +149,7 @@
       const r = days.get(d);
       const filled = !!isFilled(r);
       if (filled) ready++;
-      const files = (r?.media || []).filter((m) => m.type !== "voucher").length;
+      const files = (r?.media || []).filter((m) => m.path).length;
 
       // casella nella griglia
       const b = document.createElement("button");
@@ -286,6 +286,15 @@
     renderMedia(true);
     if (!dlg.open) dlg.showModal();
     dlg.scrollTop = 0;
+    // giorni salvati prima dell'anteprima dei link: la aggiungo appena apri la casella
+    if (/^https?:\/\//i.test(current.link_url || "") && !current.media.some((m) => m.type === "link" && m.href === current.link_url)) {
+      const d0 = day;
+      (async () => {
+        await refreshLink();
+        if (current.day !== d0) return;
+        try { await saveRow(); renderPreview(false); } catch {}
+      })();
+    }
   }
 
   function readForm() {
@@ -301,8 +310,33 @@
     if (v) current.media.push({ type: "voucher", caption: v, label: $("f-voucher-label").value.trim(), name: "buono" });
   }
 
+  // Anteprima del link (copertina e titolo di una playlist, un video…): la chiede al server quando il link cambia.
+  async function linkInfo(url) {
+    try {
+      const { data } = await sb.auth.getSession();
+      const ac = new AbortController(); setTimeout(() => ac.abort(), 9000);
+      const r = await fetch(`${C.SUPABASE_URL}/functions/v1/linkinfo`, {
+        method: "POST", signal: ac.signal,
+        headers: { "Content-Type": "application/json", apikey: C.SUPABASE_KEY, Authorization: `Bearer ${data.session?.access_token || ""}` },
+        body: JSON.stringify({ url }),
+      });
+      return r.ok ? await r.json() : null;
+    } catch { return null; }
+  }
+  async function refreshLink() {
+    const url = current.link_url;
+    const old = current.media.find((m) => m.type === "link");
+    if (!/^https?:\/\//i.test(url || "")) { current.media = current.media.filter((m) => m.type !== "link"); return; }
+    if (old && old.href === url) return;
+    const info = await linkInfo(url);
+    if (current.link_url !== url) return;
+    current.media = current.media.filter((m) => m.type !== "link");
+    current.media.push({ type: "link", name: "anteprima", href: url, title: info?.title || "", image: info?.image || "", provider: info?.provider || "" });
+  }
+
   async function saveRow() {
     readForm();
+    await refreshLink();
     const row = { ...current, calendar: cal.slug, updated_at: new Date().toISOString() };
     delete row.created_at;
     const { data, error } = await sb.from("days").upsert(row, { onConflict: "calendar,day" }).select().single();
@@ -331,6 +365,7 @@
     setAuto("Salvo…", "wait");
     try {
       await saveRow();
+      renderPreview(false);
       setAuto("Salvato automaticamente ✓");
       $("save-error").textContent = "";
       return true;
@@ -498,7 +533,15 @@
     if (aud) extra.push(`🎧 ${aud === 1 ? "vocale" : aud + " audio"}${autoAudio(media) ? " (uno parte da solo)" : " (lei preme ▶)"}`.replace("vocale (uno parte", "vocale (parte"));
     if (vid) extra.push(`🎬 ${vid === 1 ? "video" : vid + " video"}`);
     if (extra.length) sheet.append(el("p", "pv-extra", extra.join("  ·  ")));
-    if (d.link_url) sheet.append(el("span", "pv-link", d.link_label || "Apri il link ✨"));
+    if (d.link_url) {
+      const li = media.find((m) => m.type === "link" && m.href === d.link_url);
+      const card = el("span", "pv-lcard");
+      if (li && li.image) { const im = document.createElement("img"); im.src = li.image; im.alt = ""; im.referrerPolicy = "no-referrer"; card.append(im); }
+      const t = el("span", "pv-lt");
+      t.append(el("small", "", (li && li.provider) || "Link"), el("b", "", d.link_label || (li && li.title) || "Apri il link ✨"));
+      card.append(t, el("i", "", "▶"));
+      sheet.append(card);
+    }
     if (d.allow_download !== false) sheet.append(el("span", "pv-save", "⬇ Salva la cartolina"));
     pv.append(sheet);
   }

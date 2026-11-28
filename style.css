@@ -687,3 +687,54 @@ body::before {
 .save-files { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(142, 27, 34, .3); }
 .save-files p { width: 100%; margin: 0; font-size: 14px; color: #8a6a6f; }
 .save-files a { padding: 7px 12px; border-radius: 999px; background: rgba(142, 27, 34, .08); color: var(--wine); font-size: 15px; text-decoration: none; }
+
+/* ---------- tasto salva nella barra in basso ---------- */
+.day-nav button.save { display: grid; place-items: center; padding: 0; }
+.day-nav button.save svg { width: 22px; height: 22px; }
+.day-nav button.save[hidden] { display: none; }
+@media (max-width: 400px) { .day-nav { gap: 14px; } }
+
+/* ---------- lettore audio con onda ---------- */
+.aplayer {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 999px;
+  background: linear-gradient(180deg, #fffaf0, #f3e6cc); border: 1px solid rgba(142, 27, 34, .14);
+  box-shadow: 0 6px 16px rgba(90, 30, 20, .14), inset 0 1px 0 #fff;
+}
+.aplayer audio { display: none; }
+.ap-play {
+  flex: none; width: 46px; height: 46px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #c4313a, #7c1622); color: #fff6ea; cursor: pointer;
+  box-shadow: 0 4px 10px rgba(124, 22, 34, .35);
+}
+.ap-play svg { width: 22px; height: 22px; margin-left: 2px; }
+.aplayer.playing .ap-play svg { margin-left: 0; }
+.ap-wave { flex: 1; min-width: 0; height: 34px; display: flex; align-items: center; gap: 2px; cursor: pointer; }
+.ap-wave i { flex: 1; min-width: 2px; border-radius: 2px; background: rgba(124, 22, 34, .28); transition: background .2s; }
+.ap-wave i.on { background: #8e1b22; }
+.aplayer.playing .ap-wave i.on:last-of-type { animation: none; }
+.ap-time { flex: none; font-family: var(--serif); font-size: 13px; font-variant-numeric: tabular-nums; color: #7c1622; }
+
+/* ---------- link con anteprima ---------- */
+.lcard {
+  display: block; margin: 4px 0 18px; overflow: hidden; border-radius: 16px; text-decoration: none; color: var(--ink);
+  background: linear-gradient(180deg, #fffaf0, #f3e6cc); border: 1px solid rgba(142, 27, 34, .14);
+  box-shadow: 0 8px 20px rgba(90, 30, 20, .16), inset 0 1px 0 #fff; transform: rotate(.6deg);
+}
+.lc-cover { display: block; position: relative; aspect-ratio: 16 / 9; background: #2a1a16; overflow: hidden; }
+.lcard.spotify .lc-cover { aspect-ratio: 1 / 1; max-height: 340px; width: 100%; }
+.lc-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.lc-cover::after { content: ""; position: absolute; inset: auto 0 0; height: 40%; background: linear-gradient(transparent, rgba(0, 0, 0, .25)); }
+.lc-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.lc-icon { flex: none; width: 34px; height: 34px; color: #7c1622; }
+.lcard.spotify .lc-icon { color: #1c8a4a; }
+.lcard.youtube .lc-icon { color: #c4302b; }
+.lc-icon svg { width: 100%; height: 100%; }
+.lc-text { flex: 1; min-width: 0; display: grid; gap: 1px; text-align: left; }
+.lc-text small { font-family: var(--serif); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #a6464b; }
+.lc-text strong { font-family: var(--serif); font-size: 18px; line-height: 1.2; color: #5a1019; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lc-sub { font-size: 14px; color: #8a6a6f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lc-go { flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #fff6ea;
+  background: radial-gradient(circle at 35% 30%, #c4313a, #7c1622); box-shadow: 0 4px 10px rgba(124, 22, 34, .35); }
+.lc-go svg { width: 20px; height: 20px; }
+.lcard:active { transform: rotate(.6deg) scale(.98); }
+.sheet.enter .lcard, .sheet.enter .aplayer { animation: fadeUp .6s ease-out both .5s; }

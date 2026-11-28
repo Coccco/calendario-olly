@@ -332,3 +332,9 @@ body:has(#panel:not([hidden])) { background: linear-gradient(#1a3a29 0, #e9dfcd 
 .dl-row small { color: var(--muted); font-size: 13px; }
 .dl-row .switch { flex: none; }
 .pv-save { display: block; width: max-content; margin: 12px auto 0; padding: 6px 14px; border: 1.5px solid rgba(142, 27, 34, .35); border-radius: 999px; font-size: 13px; color: var(--wine); }
+.pv-lcard { display: block; margin: 14px 4px 0; overflow: hidden; border-radius: 12px; background: #fffaf0; border: 1px solid rgba(142, 27, 34, .14); box-shadow: 0 4px 12px rgba(90, 30, 20, .14); text-align: left; position: relative; }
+.pv-lcard img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.pv-lt { display: grid; padding: 8px 52px 8px 12px; }
+.pv-lt small { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #a6464b; }
+.pv-lt b { font-size: 15px; color: #5a1019; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-lcard i { position: absolute; right: 10px; bottom: 9px; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #8e1b22; color: #fff; font-style: normal; font-size: 12px; }

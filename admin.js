@@ -495,11 +495,11 @@
     const label = typeof f.label === "string" ? f.label : DEF_LABEL;
     if (label.trim()) main.append(el("span", "v-small", label.trim()));
     main.append(el("strong", "", f.caption || "una sorpresa"), el("i", "", "♡"));
-    const stub = el("div", "t-stub");
-    stub.append(el("span", "", "N°"), el("b", "", String(day).padStart(2, "0")), el("em", "", "♥"));
-    paper.append(main, stub);
+    paper.append(main);
     ticket.append(paper);
-    wrap.append(el("span", "env-back"), el("span", "env-flap"), ticket, el("span", "env-front"), el("span", "twine"));
+    const seal = el("span", "v-seal");
+    seal.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5C5 15.6 3 12.3 3 9.3 3 6.6 5.1 4.6 7.6 4.6c1.9 0 3.4 1 4.4 2.6 1-1.6 2.5-2.6 4.4-2.6C18.9 4.6 21 6.6 21 9.3c0 3-2 6.3-9 11.2z" fill="#7a0d15"/></svg>';
+    wrap.append(el("span", "v-mat"), ticket, seal);
     return wrap;
   }
 

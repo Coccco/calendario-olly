@@ -16,8 +16,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20261128j">
-  <link rel="stylesheet" href="voucher.css?v=20261128j">
+  <link rel="stylesheet" href="style.css?v=20261128k">
+  <link rel="stylesheet" href="voucher.css?v=20261128k">
 </head>
 <body>
   <div class="snow" aria-hidden="true"></div>
@@ -67,15 +67,22 @@
 
   <!-- Finestra della sorpresa -->
   <dialog id="surprise" class="surprise">
-    <article class="sheet">
-      <button class="close" type="button" aria-label="Chiudi">×</button>
-      <span class="sprig-deco" data-holly></span>
-      <p class="s-date"><span id="s-date"></span></p>
-      <h2 id="s-title"></h2>
-      <div class="sheet-bow" data-bow></div>
-      <div id="s-body"></div>
-      <span class="seal" aria-hidden="true">♥</span>
-    </article>
+    <div class="paper">
+      <span class="paper-rim" aria-hidden="true"></span>
+      <span class="paper-bg" aria-hidden="true"></span>
+      <article class="sheet">
+        <button class="close" type="button" aria-label="Chiudi">×</button>
+        <p class="s-date"><span id="s-date"></span></p>
+        <h2 id="s-title"></h2>
+        <div id="s-body"></div>
+      </article>
+      <span class="paper-bow" data-bow aria-hidden="true"></span>
+      <span class="paper-sprig" data-sprig aria-hidden="true"></span>
+    </div>
+    <svg class="fx" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="tear" x="-4%" y="-4%" width="108%" height="108%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="12" xChannelSelector="R" yChannelSelector="G"/></filter>
+      <filter id="tear-rim" x="-4%" y="-4%" width="108%" height="108%"><feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="4" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/></filter>
+    </svg>
     <nav class="day-nav" aria-label="Altri giorni">
       <button id="s-prev" type="button" aria-label="Giorno prima">‹</button>
       <span id="s-count"></span>
@@ -87,9 +94,9 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="config.js?v=20261128j"></script>
-  <script src="decor.js?v=20261128j"></script>
-  <script src="postcard.js?v=20261128j"></script>
-  <script src="app.js?v=20261128j"></script>
+  <script src="config.js?v=20261128k"></script>
+  <script src="decor.js?v=20261128k"></script>
+  <script src="postcard.js?v=20261128k"></script>
+  <script src="app.js?v=20261128k"></script>
 </body>
 </html>

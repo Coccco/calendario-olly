@@ -442,7 +442,23 @@
     return wrap;
   }
 
+  // timbro postale (cerchio con cuore e linee ondulate)
+  const POSTMARK = '<svg viewBox="0 0 130 70" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="35" cy="35" r="29"/><circle cx="35" cy="35" r="23" stroke-width="1.2"/><path d="M35 47c-9-6-11-11-11-14.5 0-3 2.3-5.2 5-5.2 2.6 0 4.6 1.6 6 3.6 1.4-2 3.4-3.6 6-3.6 2.7 0 5 2.2 5 5.2 0 3.5-2 8.5-11 14.5z"/><path d="M70 22c8-5 14 5 22 0s14 5 22 0 10 2 14 0M70 32c8-5 14 5 22 0s14 5 22 0 10 2 14 0M70 42c8-5 14 5 22 0s14 5 22 0 10 2 14 0M70 52c8-5 14 5 22 0s14 5 22 0"/></g></svg>';
+
   // ---------- link con anteprima (copertina e titolo presi dall'admin) ----------
+  // copertina disegnata quando il link non ha un'immagine (vinile per la musica, icona per il resto)
+  function decoCover(kind, music) {
+    const cov = el("span", "lc-cover deco " + kind);
+    cov.innerHTML = music
+      ? '<svg viewBox="0 0 200 120" aria-hidden="true"><circle cx="100" cy="60" r="46" fill="#1d0c0c"/><circle cx="100" cy="60" r="40" fill="none" stroke="#3a2222" stroke-width="1"/><circle cx="100" cy="60" r="32" fill="none" stroke="#3a2222" stroke-width="1"/><circle cx="100" cy="60" r="24" fill="none" stroke="#3a2222" stroke-width="1"/><circle cx="100" cy="60" r="15" fill="#b3222a"/><circle cx="100" cy="60" r="3" fill="#f6ead2"/><path d="M60 30a46 46 0 0 1 20-14" stroke="#fff" stroke-opacity=".25" stroke-width="3" fill="none" stroke-linecap="round"/><g fill="#f1d9a4"><path d="M156 30v26a7 6 0 1 1-3-5V36l-12 3v22a7 6 0 1 1-3-5V33z"/><path d="M38 72v18a5 4.5 0 1 1-2.5-3.6V72z"/></g></svg>'
+      : kind === "youtube"
+        ? '<svg viewBox="0 0 200 120" aria-hidden="true"><rect x="62" y="30" width="76" height="56" rx="14" fill="#f6ead2"/><path d="M92 46v24l20-12z" fill="#b3222a"/></svg>'
+        : kind === "link"
+        ? '<svg viewBox="0 0 200 120" aria-hidden="true"><g fill="none" stroke="#f6ead2" stroke-width="9" stroke-linecap="round"><path d="M92 70a16 16 0 0 0 22.6 0l12-12a16 16 0 0 0-22.6-22.6l-4 4"/><path d="M108 50a16 16 0 0 0-22.6 0l-12 12a16 16 0 0 0 22.6 22.6l4-4"/></g></svg>'
+        : '<svg viewBox="0 0 200 120" aria-hidden="true"><path d="M100 98s26-24 26-45a26 26 0 0 0-52 0c0 21 26 45 26 45z" fill="#f6ead2"/><circle cx="100" cy="53" r="10" fill="#b3222a"/></svg>';
+    return cov;
+  }
+
   function linkCard(d, info) {
     const url = d.link_url;
     let host = "", path = "";
@@ -450,7 +466,8 @@
     const kind = /spotify\./.test(host) ? "spotify" : /youtu\.?be/.test(host) ? "youtube"
       : /maps/.test(host + path) ? "maps" : "link";
     const media = kind === "spotify" || kind === "youtube" || /vimeo|soundcloud/.test(host);
-    const a = el("a", "lcard " + kind + (info && info.image ? " big" : ""));
+    const a = el("a", "lcard big " + kind);
+    const music = kind === "spotify" || /playlist|canzon|music|song|brano|album|🎶|🎵/i.test((d.link_label || "") + " " + ((info && info.title) || "") + " " + url);
     a.href = url; a.target = "_blank"; a.rel = "noopener";
     const prov = (info && info.provider) || { spotify: "Spotify", youtube: "YouTube", maps: "Mappa" }[kind] || host;
     const title = d.link_label || (info && info.title) || "Apri il link ✨";
@@ -459,10 +476,10 @@
       const cov = el("span", "lc-cover");
       const img = document.createElement("img");
       img.src = info.image; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-      img.onerror = () => { a.classList.remove("big"); cov.remove(); };
+      img.onerror = () => { cov.replaceWith(decoCover(kind, music)); };
       cov.append(img);
       a.append(cov);
-    }
+    } else a.append(decoCover(kind, music));
     const row = el("span", "lc-row");
     const icon = el("span", "lc-icon"); icon.innerHTML = ICO[kind] || ICO.link;
     const text = el("span", "lc-text");
@@ -620,7 +637,11 @@
         fig.append(el("span", "tape"));
         const img = document.createElement("img");
         img.alt = f.caption || ""; img.src = f.url; img.decoding = "async";
-        fig.append(img, el("figcaption", "", f.caption || "♡"));
+        fig.append(img, el("figcaption", "", f.caption ? f.caption + " ♡" : "♡"));
+        if (i === 0) {
+          const pm = el("span", "postmark"); pm.innerHTML = POSTMARK; fig.append(pm);
+          if (window.DECOR && DECOR.sprig) { const sp = el("span", "pol-sprig"); sp.innerHTML = DECOR.sprig(11, false); fig.append(sp); }
+        }
         body.append(fig);
       });
       if (d.message) body.append(el("p", "message", d.message));
@@ -730,11 +751,11 @@
     const label = typeof f.label === "string" ? f.label : "Un regalo per te";
     if (label.trim()) main.append(el("span", "v-small", label.trim()));
     main.append(el("strong", "", f.caption || "una sorpresa"), el("i", "", "♡"));
-    const stub = el("div", "t-stub");
-    stub.append(el("span", "", "N°"), el("b", "", String(day).padStart(2, "0")), el("em", "", "♥"));
-    paper.append(main, stub);
+    paper.append(main);
     ticket.append(paper);
-    wrap.append(el("span", "env-back"), el("span", "env-flap"), ticket, el("span", "env-front"), el("span", "twine"));
+    const seal = el("span", "v-seal");
+    seal.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5C5 15.6 3 12.3 3 9.3 3 6.6 5.1 4.6 7.6 4.6c1.9 0 3.4 1 4.4 2.6 1-1.6 2.5-2.6 4.4-2.6C18.9 4.6 21 6.6 21 9.3c0 3-2 6.3-9 11.2z" fill="#7a0d15"/></svg>';
+    wrap.append(el("span", "v-mat"), ticket, seal);
     return wrap;
   }
 

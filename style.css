@@ -738,3 +738,66 @@ body::before {
 .lc-go svg { width: 20px; height: 20px; }
 .lcard:active { transform: rotate(.6deg) scale(.98); }
 .sheet.enter .lcard, .sheet.enter .aplayer { animation: fadeUp .6s ease-out both .5s; }
+
+/* =========== Sorpresa come il concept: carta strappata con bordo bianco, fiocco, rametto =========== */
+.surprise { width: min(100% - 34px, 500px); filter: none; }
+.surprise .fx { position: absolute; width: 0; height: 0; }
+.paper { position: relative; margin-top: 40px; }
+.paper-rim {
+  position: absolute; inset: -8px; pointer-events: none;
+  background: linear-gradient(170deg, #fffdf7, #f4ecdc);
+  filter: url(#tear-rim) drop-shadow(0 18px 28px rgba(0, 0, 0, .5));
+}
+.paper-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .3 0 0 0 0 .16 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 12% 6%, rgba(255, 255, 255, .7), transparent 32%),
+    radial-gradient(circle at 92% 28%, rgba(170, 120, 60, .16), transparent 38%),
+    radial-gradient(circle at 18% 78%, rgba(170, 120, 60, .18), transparent 42%),
+    radial-gradient(circle at 80% 95%, rgba(150, 100, 50, .14), transparent 40%),
+    linear-gradient(175deg, #f6ecd8, #e8d6b4);
+  filter: url(#tear);
+  box-shadow: inset 0 0 40px rgba(150, 100, 40, .18);
+}
+.surprise .sheet {
+  position: relative; z-index: 1; background: none; -webkit-mask: none; mask: none;
+  max-height: calc(100dvh - 160px); padding: 62px 24px 34px;
+}
+.paper-bow { position: absolute; z-index: 3; top: -46px; left: 50%; width: 210px; transform: translateX(-50%); pointer-events: none; filter: drop-shadow(0 6px 5px rgba(40, 0, 6, .35)); }
+.paper-bow svg { display: block; width: 100%; height: auto; }
+.paper-sprig { position: absolute; z-index: 3; left: -30px; top: -24px; width: 140px; pointer-events: none; transform: rotate(2deg); filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .3)); }
+.paper-sprig svg { display: block; width: 100%; height: auto; }
+.surprise .close {
+  z-index: 4; top: 18px; right: 18px; width: 44px; height: 44px; display: grid; place-items: center; padding: 0 0 2px;
+  border: 1.6px solid rgba(124, 22, 34, .75); background: rgba(255, 250, 240, .4); color: #7c1622; font-size: 26px; font-weight: 300;
+}
+.surprise .s-date { margin: 0 52px 8px; }
+.sheet.enter .paper-bow { animation: none; }
+.surprise[open] .paper-bow { animation: bowIn .7s cubic-bezier(.3, 1.5, .5, 1) both .25s; }
+.surprise[open] .paper-sprig { animation: sway 5s ease-in-out .8s infinite; transform-origin: 20% 10%; }
+
+/* polaroid: timbro postale e rametto */
+.polaroid .postmark { position: absolute; right: -26px; top: -30px; width: 110px; color: rgba(124, 22, 34, .55); transform: rotate(-12deg); pointer-events: none; }
+.polaroid .postmark svg { display: block; width: 100%; height: auto; }
+.polaroid .pol-sprig { position: absolute; left: -38px; bottom: 30px; width: 104px; transform: rotate(-95deg) scaleY(-1); pointer-events: none; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .3)); }
+.polaroid .pol-sprig svg { display: block; width: 100%; height: auto; }
+.polaroid figcaption { color: #7c1622; }
+
+/* copertina disegnata per i link senza immagine */
+.lc-cover.deco { display: grid; place-items: center; aspect-ratio: 16 / 9;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .12), transparent 45%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 6px),
+    linear-gradient(160deg, #a61c24, #5e0a10); }
+.lcard.spotify .lc-cover.deco { aspect-ratio: 16 / 9; }
+.lc-cover.deco svg { width: 78%; height: auto; max-height: 92%; }
+.lc-cover.deco::after { display: none; }
+.lcard { border: 6px solid #fffaf0; box-shadow: 0 10px 22px rgba(90, 30, 20, .22); }
+.paper-bow { left: calc(50% - 105px); transform: none; }
+.polaroid .postmark { right: auto; left: -24px; top: -34px; transform: rotate(-14deg); }
+.polaroid .pol-sprig { left: -30px; bottom: -22px; width: 120px; transform: rotate(-50deg); transform-origin: 30% 20%; }
+.paper-bow { top: -52px; width: 180px; left: calc(50% - 90px); }
+.surprise .sheet { padding-top: 92px; }
+.surprise .close { top: 76px; }
+.sheet h2 .t-heart { margin-left: .18em; }

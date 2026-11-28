@@ -1,78 +1,55 @@
-/* Buono regalo: busta che si apre e biglietto che esce. Usato dal calendario e dall'anteprima dell'admin. */
+/* Buono regalo: cornice di stoffa rossa, biglietto color panna e sigillo di ceralacca.
+   Usato dal calendario e dall'anteprima dell'admin. */
 .voucher {
-  --env: #a3191f; --env-dark: #6e0d14; --paper-1: #fdf6e8; --paper-2: #f1e2c4; --ink-v: #8e1b22;
-  position: relative; width: min(100%, 380px); margin: 14px auto 26px; padding: 0 0 58px;
-  perspective: 900px;
+  --ink-v: #7c1622;
+  position: relative; width: min(100%, 400px); margin: 16px auto 34px; padding: 16px 14px;
 }
-.voucher .env-back {
-  position: absolute; left: 3%; right: 3%; bottom: 0; height: 128px; border-radius: 8px;
+.voucher .v-mat {
+  position: absolute; inset: 0; border-radius: 10px; transform: rotate(-1.6deg);
   background:
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .07) 0 1px, transparent 1.5px) 0 0 / 9px 9px,
-    linear-gradient(170deg, var(--env), var(--env-dark));
-  box-shadow: 0 14px 26px rgba(40, 0, 6, .35), inset 0 0 0 1px rgba(255, 255, 255, .06);
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .035) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 5px),
+    radial-gradient(ellipse at 30% 20%, #a61c24, #6d0f16 80%);
+  box-shadow: 0 12px 24px rgba(50, 5, 10, .35), inset 0 0 0 1px rgba(255, 255, 255, .08), inset 0 0 18px rgba(0, 0, 0, .3);
 }
-/* aletta: chiusa all'inizio, poi si ribalta indietro */
-.voucher .env-flap {
-  position: absolute; left: 3%; right: 3%; bottom: 128px; height: 74px; z-index: 1;
-  transform-origin: 50% 100%; transform: rotateX(0deg);
-  background: linear-gradient(0deg, #8f141b, #b8242b);
-  clip-path: polygon(0 100%, 50% 0, 100% 100%);
-}
-.voucher .ticket { position: relative; z-index: 2; width: 86%; margin: 0 auto; transform: rotate(-1.6deg);
-  filter: drop-shadow(0 6px 8px rgba(60, 10, 14, .28)) drop-shadow(0 1px 1px rgba(60, 10, 14, .2)); }
+.voucher .v-mat::before { content: ""; position: absolute; inset: 6px; border: 1.5px dashed rgba(255, 214, 196, .35); border-radius: 6px; }
+.voucher .ticket { position: relative; z-index: 1; transform: rotate(.8deg);
+  filter: drop-shadow(0 4px 6px rgba(50, 5, 10, .35)); }
 .voucher .t-paper {
-  position: relative; display: flex; min-height: 150px; color: var(--ink-v);
+  position: relative; min-height: 150px; color: var(--ink-v);
   background:
-    radial-gradient(ellipse at 15% 10%, rgba(255, 255, 255, .7), transparent 55%),
-    repeating-linear-gradient(0deg, rgba(120, 80, 30, .035) 0 1px, transparent 1px 4px),
-    linear-gradient(170deg, var(--paper-1), var(--paper-2));
-  -webkit-mask: radial-gradient(circle 10px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat,
-                radial-gradient(circle 10px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat;
-          mask: radial-gradient(circle 10px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat,
-                radial-gradient(circle 10px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat;
+    radial-gradient(ellipse at 15% 10%, rgba(255, 255, 255, .75), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(170, 120, 60, .16), transparent 55%),
+    linear-gradient(170deg, #fcf4e3, #efdfbf);
+  -webkit-mask: radial-gradient(circle 13px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat,
+                radial-gradient(circle 13px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat;
+          mask: radial-gradient(circle 13px at 0 50%, transparent 97%, #000) left / 51% 100% no-repeat,
+                radial-gradient(circle 13px at 100% 50%, transparent 97%, #000) right / 51% 100% no-repeat;
   border-radius: 6px;
 }
-.voucher .t-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; padding: 18px 14px 30px 22px; text-align: center; }
-.voucher .t-main::before { content: ""; position: absolute; inset: 8px 68px 8px 14px; border: 1.5px dashed rgba(142, 27, 34, .28); border-radius: 4px; pointer-events: none; }
-.voucher .v-small { font-family: "Playfair Display", Georgia, serif; font-size: 11px; font-weight: 700; letter-spacing: .17em; white-space: nowrap; text-transform: uppercase; color: #a6464b; }
-.voucher .v-small::before, .voucher .v-small::after { content: "✦"; margin: 0 .6em; font-size: 9px; vertical-align: 2px; color: #c9a24f; letter-spacing: 0; }
-.voucher strong { font-family: "Caveat", cursive; font-size: 38px; line-height: 1.02; font-weight: 600; color: var(--ink-v); overflow-wrap: anywhere; }
-.voucher .t-main i { font-style: normal; color: #b3222a; font-size: 15px; }
-/* matrice con la perforazione */
-.voucher .t-stub {
-  position: relative; flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  border-left: 2px dotted rgba(142, 27, 34, .35); padding-bottom: 22px;
-  background: linear-gradient(170deg, rgba(179, 34, 42, .06), rgba(179, 34, 42, .12));
-  font-family: "Playfair Display", Georgia, serif; color: #a6464b;
+.voucher .t-paper::before { content: ""; position: absolute; inset: 9px 22px; border: 1.5px dashed rgba(142, 27, 34, .32); border-radius: 4px; pointer-events: none; }
+.voucher .t-main { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 22px 34px 24px; text-align: center; }
+.voucher .v-small { font-family: "Playfair Display", Georgia, serif; font-size: 14px; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--ink-v); }
+.voucher strong { font-family: "Caveat", cursive; font-size: 40px; line-height: 1.02; font-weight: 600; color: var(--ink-v); overflow-wrap: anywhere; }
+.voucher .t-main i { font-style: normal; color: #a3222b; font-size: 22px; line-height: 1; margin-top: 4px; }
+/* sigillo di ceralacca */
+.voucher .v-seal {
+  position: absolute; z-index: 2; right: -12px; bottom: -22px; width: 76px; height: 76px; display: grid; place-items: center;
+  border-radius: 47% 53% 44% 56% / 55% 45% 55% 45%;
+  background: radial-gradient(circle at 34% 30%, #cf3a42, #8e141c 55%, #5e0a10);
+  box-shadow: 0 5px 10px rgba(40, 0, 6, .45), inset 0 -3px 6px rgba(0, 0, 0, .35), inset 0 3px 4px rgba(255, 255, 255, .18);
+  transform: rotate(-10deg);
 }
-.voucher .t-stub span { font-size: 10px; letter-spacing: .2em; }
-.voucher .t-stub b { font-size: 22px; font-style: italic; color: var(--ink-v); }
-.voucher .t-stub em { margin-top: 4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
-  font-style: normal; font-size: 13px; color: #fff; background: radial-gradient(circle at 35% 30%, #d7464c, #8e1b22); box-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
-/* tasca davanti della busta */
-.voucher .env-front {
-  position: absolute; left: 3%; right: 3%; bottom: 0; height: 84px; z-index: 3; border-radius: 0 0 8px 8px;
-  background:
-    linear-gradient(to top right, transparent 49.4%, rgba(0, 0, 0, .14) 50%, transparent 51.5%) left / 50% 100% no-repeat,
-    linear-gradient(to top left, transparent 49.4%, rgba(0, 0, 0, .14) 50%, transparent 51.5%) right / 50% 100% no-repeat,
-    linear-gradient(175deg, #b5232a, #7d1017);
-  clip-path: polygon(0 0, 50% 46%, 100% 0, 100% 100%, 0 100%);
-  box-shadow: inset 0 -6px 12px rgba(0, 0, 0, .18);
-}
-.voucher .twine { position: absolute; right: -6px; bottom: 18px; z-index: 4; width: 110px; height: 3px; transform: rotate(-28deg);
-  background: repeating-linear-gradient(90deg, #c22d34 0 6px, #fff6ea 6px 10px); border-radius: 2px; box-shadow: 0 1px 1px rgba(0, 0, 0, .2); }
+.voucher .v-seal::before { content: ""; position: absolute; inset: 11px; border-radius: 50%;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, .35), inset 0 -1px 1px rgba(255, 255, 255, .2), 0 1px 0 rgba(255, 255, 255, .12); }
+.voucher .v-seal svg { position: relative; width: 30px; height: 30px; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .25)) drop-shadow(0 -1px 0 rgba(0, 0, 0, .35)); }
 
-/* apertura: l'aletta si ribalta, il biglietto sale piano */
-.voucher.play .env-flap { animation: vFlap .55s cubic-bezier(.4, 0, .3, 1) both var(--v-delay, .6s); }
-.voucher.play .ticket { animation: vRise .9s cubic-bezier(.22, 1.2, .4, 1) both calc(var(--v-delay, .6s) + .4s); }
-.voucher.play .t-stub em { animation: vPop .4s cubic-bezier(.3, 1.6, .5, 1) both calc(var(--v-delay, .6s) + .9s); }
-@keyframes vFlap {
-  0% { transform: rotateX(180deg); z-index: 4; }
-  60% { z-index: 4; }
-  61%, 100% { transform: rotateX(0deg); z-index: 1; }
-}
-@keyframes vRise { from { opacity: 0; transform: translateY(70px) rotate(0deg) scale(.94); } to { opacity: 1; transform: rotate(-1.6deg); } }
-@keyframes vPop { from { transform: scale(0); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .voucher.play .env-flap, .voucher.play .ticket, .voucher.play .t-stub em { animation: none; } }
-@media (max-width: 380px) { .voucher strong { font-size: 33px; } }
+/* apertura: cornice, poi il biglietto, poi il sigillo che si "stampa" */
+.voucher.play .v-mat { animation: vMat .5s ease-out both var(--v-delay, .5s); }
+.voucher.play .ticket { animation: vRise .8s cubic-bezier(.22, 1.2, .4, 1) both calc(var(--v-delay, .5s) + .2s); }
+.voucher.play .v-seal { animation: vStamp .5s cubic-bezier(.2, 1.5, .5, 1) both calc(var(--v-delay, .5s) + .8s); }
+@keyframes vMat { from { opacity: 0; transform: rotate(-6deg) scale(.9); } to { opacity: 1; transform: rotate(-1.6deg); } }
+@keyframes vRise { from { opacity: 0; transform: translateY(30px) rotate(-3deg) scale(.95); } to { opacity: 1; transform: rotate(.8deg); } }
+@keyframes vStamp { 0% { opacity: 0; transform: scale(2) rotate(-40deg); } 70% { opacity: 1; transform: scale(.92) rotate(-6deg); } 100% { opacity: 1; transform: rotate(-10deg); } }
+@media (prefers-reduced-motion: reduce) { .voucher.play .v-mat, .voucher.play .ticket, .voucher.play .v-seal { animation: none; } }
+@media (max-width: 380px) { .voucher strong { font-size: 34px; } .voucher .t-main { padding: 20px 28px 22px; } }

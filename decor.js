@@ -94,12 +94,48 @@ window.DECOR = (() => {
     return svg + "</svg>";
   }
 
+  // Rametto di pino con bacche e etichetta (angolo in alto a sinistra della sorpresa)
+  function sprig(seed = 5, tag = true) {
+    let r = seed;
+    const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 210" aria-hidden="true">`;
+    const stems = [[[0, 4], [60, 40], [150, 70]], [[0, 10], [40, 70], [70, 150]], [[0, 6], [70, 20], [120, 10]]];
+    const needles = [];
+    for (const [a, c, b] of stems) {
+      svg += `<path d="M${a} Q${c} ${b}" fill="none" stroke="#4a3322" stroke-width="2.6" stroke-linecap="round"/>`;
+      for (let t = 0.06; t <= 1; t += 0.03) {
+        const x = (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0];
+        const y = (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1];
+        const dx = 2 * (1 - t) * (c[0] - a[0]) + 2 * t * (b[0] - c[0]);
+        const dy = 2 * (1 - t) * (c[1] - a[1]) + 2 * t * (b[1] - c[1]);
+        const ang = Math.atan2(dy, dx);
+        const len = 20 * (1 - t * 0.45) + rnd() * 5;
+        for (const side of [-1, 1]) {
+          const a2 = ang + side * (0.7 + rnd() * 0.35);
+          const col = ["#1d4a30", "#2a5e3d", "#3a7a50", "#24553a", "#47885a"][Math.floor(rnd() * 5)];
+          needles.push(`<path d="M${x.toFixed(1)} ${y.toFixed(1)} l${(Math.cos(a2) * len).toFixed(1)} ${(Math.sin(a2) * len).toFixed(1)}" stroke="${col}" stroke-width="${(1.8 + rnd()).toFixed(1)}" stroke-linecap="round"/>`);
+        }
+      }
+    }
+    svg += needles.join("");
+    const berries = [[42, 38], [52, 32], [48, 46], [36, 48], [58, 44]];
+    svg += berries.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6.5" fill="#b3161f"/><circle cx="${x - 2}" cy="${y - 2.2}" r="2" fill="#fff" fill-opacity=".55"/>`).join("");
+    if (tag) {
+      svg += `<path d="M47 44 Q52 70 62 96" fill="none" stroke="#c9b48c" stroke-width="1.6"/>
+        <g transform="rotate(-8 64 130)"><path d="M48 98 L80 98 L80 158 L48 158 L48 106 Z" fill="#efe3c8" stroke="#c7b28a" stroke-width="1.2"/>
+        <circle cx="64" cy="106" r="3" fill="#fff" stroke="#b9a37a"/>
+        <path d="M64 142 C52 133 54 121 60 122 C62.5 122.4 64 125 64 125 C64 125 65.5 122.4 68 122 C74 121 76 133 64 142Z" fill="none" stroke="#8e1b22" stroke-width="2"/></g>`;
+    }
+    return svg + "</svg>";
+  }
+
   function mount() {
+    document.querySelectorAll("[data-sprig]").forEach((n) => (n.innerHTML = sprig(5)));
     document.querySelectorAll("[data-bow]").forEach((n) => (n.innerHTML = bow()));
     document.querySelectorAll("[data-heart]").forEach((n) => (n.innerHTML = HEART));
     document.querySelectorAll("[data-holly]").forEach((n) => (n.innerHTML = icon("holly") + icon("sprig")));
     document.querySelectorAll(".branch").forEach((n, i) => (n.innerHTML = branch(7 + i * 13)));
   }
 
-  return { icon, mount, bow };
+  return { icon, mount, bow, sprig };
 })();

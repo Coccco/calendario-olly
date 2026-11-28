@@ -466,20 +466,20 @@
     const kind = /spotify\./.test(host) ? "spotify" : /youtu\.?be/.test(host) ? "youtube"
       : /maps/.test(host + path) ? "maps" : "link";
     const media = kind === "spotify" || kind === "youtube" || /vimeo|soundcloud/.test(host);
-    const a = el("a", "lcard big " + kind);
+    const a = el("a", "lcard " + (info && info.image ? "big " : "") + kind);
     const music = kind === "spotify" || /playlist|canzon|music|song|brano|album|🎶|🎵/i.test((d.link_label || "") + " " + ((info && info.title) || "") + " " + url);
     a.href = url; a.target = "_blank"; a.rel = "noopener";
-    const prov = (info && info.provider) || { spotify: "Spotify", youtube: "YouTube", maps: "Mappa" }[kind] || host;
+    const prov = { spotify: "Spotify", youtube: "YouTube", maps: "Mappa" }[kind] || (info && info.provider) || host;
     const title = d.link_label || (info && info.title) || "Apri il link ✨";
-    const sub = d.link_label && info && info.title && info.title !== d.link_label ? info.title : "";
+    const sub = d.link_label && info && info.title && info.title !== d.link_label && info.title !== "Spotify" ? info.title : "";
     if (info && info.image) {
       const cov = el("span", "lc-cover");
       const img = document.createElement("img");
       img.src = info.image; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-      img.onerror = () => { cov.replaceWith(decoCover(kind, music)); };
+      img.onerror = () => { cov.remove(); a.classList.remove("big"); };
       cov.append(img);
       a.append(cov);
-    } else a.append(decoCover(kind, music));
+    }
     const row = el("span", "lc-row");
     const icon = el("span", "lc-icon"); icon.innerHTML = ICO[kind] || ICO.link;
     const text = el("span", "lc-text");

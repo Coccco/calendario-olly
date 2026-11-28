@@ -287,7 +287,7 @@
     if (!dlg.open) dlg.showModal();
     dlg.scrollTop = 0;
     // giorni salvati prima dell'anteprima dei link: la aggiungo appena apri la casella
-    if (/^https?:\/\//i.test(current.link_url || "") && !current.media.some((m) => m.type === "link" && m.href === current.link_url)) {
+    if (/^https?:\/\//i.test(current.link_url || "") && !current.media.some((m) => m.type === "link" && m.href === current.link_url && m.image)) {
       const d0 = day;
       (async () => {
         await refreshLink();
@@ -327,11 +327,11 @@
     const url = current.link_url;
     const old = current.media.find((m) => m.type === "link");
     if (!/^https?:\/\//i.test(url || "")) { current.media = current.media.filter((m) => m.type !== "link"); return; }
-    if (old && old.href === url) return;
+    if (old && old.href === url && (old.image || old.checked > Date.now() - 60000)) return;
     const info = await linkInfo(url);
     if (current.link_url !== url) return;
     current.media = current.media.filter((m) => m.type !== "link");
-    current.media.push({ type: "link", name: "anteprima", href: url, title: info?.title || "", image: info?.image || "", provider: info?.provider || "" });
+    current.media.push({ type: "link", name: "anteprima", href: url, title: info?.title || "", image: info?.image || "", provider: info?.provider || "", checked: Date.now() });
   }
 
   async function saveRow() {
@@ -541,6 +541,7 @@
       t.append(el("small", "", (li && li.provider) || "Link"), el("b", "", d.link_label || (li && li.title) || "Apri il link ✨"));
       card.append(t, el("i", "", "▶"));
       sheet.append(card);
+      if (li && !li.image && /spotify|youtu/i.test(d.link_url)) sheet.append(el("p", "pv-note", "Niente copertina: Spotify/YouTube non la danno per le playlist private. Rendila pubblica e riapri la casella."));
     }
     if (d.allow_download !== false) sheet.append(el("span", "pv-save", "⬇ Salva la cartolina"));
     pv.append(sheet);
